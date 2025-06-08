@@ -9,7 +9,7 @@ import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_scree
 import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
 import 'package:intl/intl.dart';
 
-class ConsultaListScreen extends StatefulWidget { // ESTA É A CLASSE DO WIDGET
+class ConsultaListScreen extends StatefulWidget {
   const ConsultaListScreen({super.key});
 
   static const String routeName = '/consulta-list';
@@ -18,8 +18,7 @@ class ConsultaListScreen extends StatefulWidget { // ESTA É A CLASSE DO WIDGET
   State<ConsultaListScreen> createState() => _ConsultaListScreenState();
 }
 
-class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A CLASSE DO ESTADO
-  // TODAS AS VARIÁVEIS E MÉTODOS QUE MANIPULAM O ESTADO DEVEM ESTAR AQUI DENTRO
+class _ConsultaListScreenState extends State<ConsultaListScreen> {
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
   final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
@@ -78,6 +77,19 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A 
     if (id == null) return 'Profissional Desconhecido';
     final profissional = await _profissionalRepository.getProfissionalById(id);
     return profissional?.nome ?? 'Profissional Desconhecido';
+  }
+
+  // NOVO MÉTODO: Simular envio de lembrete
+  Future<void> _sendReminder(Consulta consulta) async {
+    final pacienteNome = await _getPacienteNome(consulta.idPaciente);
+    final formattedTime = DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Lembrete enviado para $pacienteNome sobre a consulta em $formattedTime.'),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+    // Em um sistema real, aqui você chamaria um serviço de backend para enviar e-mail/SMS
   }
 
   @override
@@ -142,9 +154,14 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A 
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                // Botão de Lembrete (NOVO)
+                                IconButton(
+                                  icon: const Icon(Icons.notifications, color: Colors.orange),
+                                  onPressed: () => _sendReminder(consulta),
+                                ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () async {
+                                  onPressed: () {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Funcionalidade de edição futura.')),
                                     );
