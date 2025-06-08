@@ -1,14 +1,16 @@
-// lib/models/paciente.dart
+// lib/domain/models/paciente.dart
 
 class Paciente {
-  int? idPaciente; // AUTO_INCREMENT no SQL, então pode ser nulo na criação
+  int? idPaciente;
   String nome;
   String cpf;
-  DateTime? dataNascimento; // DATE no SQL
+  DateTime? dataNascimento;
   String? telefone;
   String? email;
   String? endereco;
   String? convenio;
+  String? alergias;                     // NOVO
+  String? condicoesPreExistentes;       // NOVO
 
   Paciente({
     this.idPaciente,
@@ -19,23 +21,25 @@ class Paciente {
     this.email,
     this.endereco,
     this.convenio,
+    this.alergias,                     // NOVO
+    this.condicoesPreExistentes,       // NOVO
   });
 
-  // Método para converter um Paciente em um Map (para inserção no banco)
   Map<String, dynamic> toMap() {
     return {
       'idPaciente': idPaciente,
       'nome': nome,
       'cpf': cpf,
-      'dataNascimento': dataNascimento?.toIso8601String(), // Converte DateTime para String para o banco
+      'dataNascimento': dataNascimento?.toIso8601String(),
       'telefone': telefone,
       'email': email,
       'endereco': endereco,
       'convenio': convenio,
+      'alergias': alergias,                     // NOVO
+      'condicoesPreExistentes': condicoesPreExistentes, // NOVO
     };
   }
 
-  // Método para criar um Paciente a partir de um Map (lido do banco)
   factory Paciente.fromMap(Map<String, dynamic> map) {
     return Paciente(
       idPaciente: map['idPaciente'] as int?,
@@ -48,11 +52,13 @@ class Paciente {
       email: map['email'] as String?,
       endereco: map['endereco'] as String?,
       convenio: map['convenio'] as String?,
+      alergias: map['alergias'] as String?,                     // NOVO
+      condicoesPreExistentes: map['condicoesPreExistentes'] as String?, // NOVO
     );
   }
 
   @override
   String toString() {
-    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio)';
+    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf)';
   }
 }

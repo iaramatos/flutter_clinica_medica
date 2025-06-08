@@ -10,7 +10,9 @@ CREATE TABLE Paciente (
     telefone VARCHAR(15),
     email VARCHAR(100),
     endereco VARCHAR(255),
-    convenio VARCHAR(100)
+    convenio VARCHAR(100),
+    alergias TEXT,                     -- NOVO
+    condicoesPreExistentes TEXT        -- NOVO
 );
 
 -- Tabela de profissionais da saúde
@@ -67,7 +69,8 @@ CREATE TABLE ResultadoExame (
     idResultado INTEGER PRIMARY KEY AUTOINCREMENT,
     idConsulta INT,
     idExame INT,
-    resultado TEXT,
+    resultado TEXT, -- Descrição do resultado
+    urlDocumento TEXT, -- NOVO: Para um link/URL do documento
     FOREIGN KEY (idConsulta) REFERENCES Consulta(idConsulta) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idExame) REFERENCES Exame(idExame) ON DELETE NO ACTION ON UPDATE NO ACTION
 );

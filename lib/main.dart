@@ -14,6 +14,10 @@ import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_scre
 import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
+
 
 // ADICIONE ESTES DOIS IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -132,6 +136,11 @@ class ClinicaMedicaApp extends StatelessWidget {
 
         // Rota do Dashboard Principal
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
+
+        // NOVAS ROTAS PARA EXAMES E RESULTADOS (ITERAÇÃO 5)
+        ExameListScreen.routeName: (context) => const ExameListScreen(),
+        ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
+        ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
       },
     );
   }

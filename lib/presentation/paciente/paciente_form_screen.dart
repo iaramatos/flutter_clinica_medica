@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
-import 'package:intl/intl.dart'; // Importe para formatação de data (certifique-se de que 'intl' está no pubspec.yaml)
+import 'package:intl/intl.dart'; // Importe para formatação de data
 
 class PacienteFormScreen extends StatefulWidget {
-  final Paciente? paciente; // Adicionado para suportar edição (embora não implementado ainda na lista)
+  final Paciente? paciente; // Adicionado para suportar edição
   const PacienteFormScreen({super.key, this.paciente});
 
   static const String routeName = '/paciente-form';
@@ -23,7 +23,9 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   final _telefoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _enderecoController = TextEditingController();
-  // REMOVIDO: final _convenioController = TextEditingController(); // Removido, pois usaremos Dropdown
+  // final _convenioController = TextEditingController(); // REMOVIDO: Usaremos Dropdown
+  final _alergiasController = TextEditingController(); // NOVO
+  final _condicoesPreExistentesController = TextEditingController(); // NOVO
 
   String? _selectedConvenio; // NOVO: Variável para o convênio selecionado no Dropdown
 
@@ -44,6 +46,8 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
       _emailController.text = widget.paciente!.email ?? '';
       _enderecoController.text = widget.paciente!.endereco ?? '';
       _selectedConvenio = widget.paciente!.convenio; // Define o convênio selecionado
+      _alergiasController.text = widget.paciente!.alergias ?? ''; // Pré-preenche
+      _condicoesPreExistentesController.text = widget.paciente!.condicoesPreExistentes ?? ''; // Pré-preenche
     }
   }
 
@@ -77,6 +81,8 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
         email: _emailController.text.isNotEmpty ? _emailController.text : null,
         endereco: _enderecoController.text.isNotEmpty ? _enderecoController.text : null,
         convenio: _selectedConvenio, // Usar o valor do dropdown
+        alergias: _alergiasController.text.isNotEmpty ? _alergiasController.text : null,
+        condicoesPreExistentes: _condicoesPreExistentesController.text.isNotEmpty ? _condicoesPreExistentesController.text : null,
       );
 
       try {
@@ -107,7 +113,8 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     _telefoneController.clear();
     _emailController.clear();
     _enderecoController.clear();
-    // REMOVIDO: _convenioController.clear();
+    _alergiasController.clear();
+    _condicoesPreExistentesController.clear();
     setState(() {
       _selectedConvenio = null; // Limpa a seleção do dropdown
     });
@@ -121,7 +128,8 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     _telefoneController.dispose();
     _emailController.dispose();
     _enderecoController.dispose();
-    // REMOVIDO: _convenioController.dispose();
+    _alergiasController.dispose();
+    _condicoesPreExistentesController.dispose();
     super.dispose();
   }
 
@@ -139,6 +147,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // CAMPO: Nome Completo
               TextFormField(
                 controller: _nomeController,
                 decoration: const InputDecoration(labelText: 'Nome Completo'),
@@ -149,6 +158,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                   return null;
                 },
               ),
+              // CAMPO: CPF
               TextFormField(
                 controller: _cpfController,
                 decoration: const InputDecoration(labelText: 'CPF'),
@@ -175,25 +185,26 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira a data de nascimento';
                   }
-                  // Adicionar validação de formato se necessário
                   return null;
                 },
               ),
+              // CAMPO: Telefone
               TextFormField(
                 controller: _telefoneController,
                 decoration: const InputDecoration(labelText: 'Telefone'),
                 keyboardType: TextInputType.phone,
               ),
+              // CAMPO: Email
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
               ),
-              // CAMPO ENDEREÇO (MANTIDO COMO TEXTO LIVRE POR ENQUANTO)
+              // CAMPO: Endereço (MANTIDO COMO TEXTO LIVRE POR ENQUANTO)
               TextFormField(
                 controller: _enderecoController,
                 decoration: const InputDecoration(labelText: 'Endereço Completo'),
-                maxLines: 2, // Aumenta um pouco para endereço
+                maxLines: 2,
               ),
               // CAMPO CONVÊNIO (COM DROPDOWN)
               DropdownButtonFormField<String>(
@@ -219,7 +230,23 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 10), // Espaçamento entre os campos
+
+              // CAMPO: Alergias (NOVO)
+              TextFormField(
+                controller: _alergiasController,
+                decoration: const InputDecoration(labelText: 'Alergias'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 10),
+              // CAMPO: Condições Pré-existentes (NOVO)
+              TextFormField(
+                controller: _condicoesPreExistentesController,
+                decoration: const InputDecoration(labelText: 'Condições Pré-existentes'),
+                maxLines: 3,
+              ),
               const SizedBox(height: 20),
+
               ElevatedButton(
                 onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
