@@ -1,0 +1,65 @@
+# misc
+.DS_Store
+.env
+.idea
+.vscode/*
+
+# build
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.last_commit_id
+.vs/
+
+# dependencies
+/ios/.symlinks/
+/android/.gradle
+/android/local.properties
+/android/.idea
+/android/build/
+/android/app/build/
+/android/app/.cxx/
+/android/app/generated/
+/android/app/src/main/assets/flutter_assets/
+/android/key.properties
+/android/keystore.jks
+
+# generated code
+*.g.dart
+*.freezed.dart
+*.gr.dart
+
+# If you are using Windows:
+Thumbs.db
+
+# Flutter/Dart
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.dart_tool/
+pubspec.lock
+# AOT builds
+*.aot
+# Android specific
+/android/.gradle
+/android/local.properties
+/android/.idea
+/android/build
+/android/app/build
+/android/app/.cxx
+/android/app/generated
+# iOS specific
+/ios/.symlinks
+/ios/Flutter/.last_build_id
+# Visual Studio Code
+.vscode/
+# IntelliJ IDEA
+.idea/
+# Mac
+.DS_Store
+
+# for sqflite_common_ffi_web setup command
+.dart_tool/build/
+.dart_tool/sqflite_common_ffi_web/
