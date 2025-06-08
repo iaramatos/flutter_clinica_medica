@@ -3,9 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
+import 'package:intl/intl.dart'; // Importe para formatação de data (certifique-se de que 'intl' está no pubspec.yaml)
 
 class PacienteFormScreen extends StatefulWidget {
-  const PacienteFormScreen({super.key});
+  final Paciente? paciente; // Adicionado para suportar edição (embora não implementado ainda na lista)
+  const PacienteFormScreen({super.key, this.paciente});
 
   static const String routeName = '/paciente-form';
 
@@ -17,34 +19,79 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _cpfController = TextEditingController();
-  final _dataNascimentoController = TextEditingController();
+  final _dataNascimentoController = TextEditingController(); // Controller para a data
   final _telefoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _enderecoController = TextEditingController();
-  final _convenioController = TextEditingController();
+  // REMOVIDO: final _convenioController = TextEditingController(); // Removido, pois usaremos Dropdown
+
+  String? _selectedConvenio; // NOVO: Variável para o convênio selecionado no Dropdown
 
   final PacienteRepository _pacienteRepository = PacienteRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    // Preenche os campos se estiver em modo de edição
+    if (widget.paciente != null) {
+      _nomeController.text = widget.paciente!.nome;
+      _cpfController.text = widget.paciente!.cpf;
+      if (widget.paciente!.dataNascimento != null) {
+        // Formata a data de nascimento para DD-MM-YYYY para exibir
+        _dataNascimentoController.text = DateFormat('dd-MM-yyyy').format(widget.paciente!.dataNascimento!);
+      }
+      _telefoneController.text = widget.paciente!.telefone ?? '';
+      _emailController.text = widget.paciente!.email ?? '';
+      _enderecoController.text = widget.paciente!.endereco ?? '';
+      _selectedConvenio = widget.paciente!.convenio; // Define o convênio selecionado
+    }
+  }
+
+  // NOVO MÉTODO: Seletor de Data de Nascimento
+  Future<void> _selectDataNascimento(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(), // Data inicial do calendário
+      firstDate: DateTime(1900),   // Primeira data possível
+      lastDate: DateTime.now(),    // Última data possível (hoje)
+      locale: const Locale('pt', 'BR'), // Opcional: para calendário em português
+    );
+    if (picked != null) {
+      setState(() {
+        // Formata a data selecionada para DD-MM-YYYY para exibir no campo
+        _dataNascimentoController.text = DateFormat('dd-MM-yyyy').format(picked);
+      });
+    }
+  }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final paciente = Paciente(
+        idPaciente: widget.paciente?.idPaciente, // Mantém o ID para edição
         nome: _nomeController.text,
         cpf: _cpfController.text,
         dataNascimento: _dataNascimentoController.text.isNotEmpty
-            ? DateTime.tryParse(_dataNascimentoController.text)
+            ? DateFormat('dd-MM-yyyy').parse(_dataNascimentoController.text) // Converte de volta para DateTime para o banco
             : null,
         telefone: _telefoneController.text.isNotEmpty ? _telefoneController.text : null,
         email: _emailController.text.isNotEmpty ? _emailController.text : null,
         endereco: _enderecoController.text.isNotEmpty ? _enderecoController.text : null,
-        convenio: _convenioController.text.isNotEmpty ? _convenioController.text : null,
+        convenio: _selectedConvenio, // Usar o valor do dropdown
       );
 
       try {
-        await _pacienteRepository.insertPaciente(paciente);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Paciente salvo com sucesso!')),
-        );
-        _clearForm(); // Limpa o formulário após o sucesso
+        if (paciente.idPaciente == null) {
+          await _pacienteRepository.insertPaciente(paciente);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Paciente salvo com sucesso!')),
+          );
+        } else {
+          await _pacienteRepository.updatePaciente(paciente);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Paciente atualizado com sucesso!')),
+          );
+        }
+        Navigator.of(context).pop(); // Volta para a lista após salvar
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao salvar paciente: $e')),
@@ -56,22 +103,25 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   void _clearForm() {
     _nomeController.clear();
     _cpfController.clear();
-    _dataNascimentoController.clear();
+    _dataNascimentoController.clear(); // Limpa também o campo de data
     _telefoneController.clear();
     _emailController.clear();
     _enderecoController.clear();
-    _convenioController.clear();
+    // REMOVIDO: _convenioController.clear();
+    setState(() {
+      _selectedConvenio = null; // Limpa a seleção do dropdown
+    });
   }
 
   @override
   void dispose() {
     _nomeController.dispose();
     _cpfController.dispose();
-    _dataNascimentoController.dispose();
+    _dataNascimentoController.dispose(); // Dispose do novo controller
     _telefoneController.dispose();
     _emailController.dispose();
     _enderecoController.dispose();
-    _convenioController.dispose();
+    // REMOVIDO: _convenioController.dispose();
     super.dispose();
   }
 
@@ -79,9 +129,9 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastro de Paciente'),
+        title: Text(widget.paciente == null ? 'Cadastro de Paciente' : 'Editar Paciente'), // Título dinâmico
         backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white, // Para o texto do título e ícones
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -107,15 +157,27 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira o CPF';
                   }
-                  // Adicionar validação de CPF mais robusta se necessário
                   return null;
                 },
               ),
+              // CAMPO DATA DE NASCIMENTO (COM DATE PICKER E FORMATO DD-MM-YYYY)
               TextFormField(
                 controller: _dataNascimentoController,
-                decoration: const InputDecoration(labelText: 'Data de Nascimento (YYYY-MM-DD)'),
-                keyboardType: TextInputType.datetime,
-                // Opcional: Adicionar um seletor de data (DatePicker)
+                decoration: InputDecoration(
+                  labelText: 'Data de Nascimento (DD-MM-YYYY)',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () => _selectDataNascimento(context),
+                  ),
+                ),
+                readOnly: true, // Impede digitação manual
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira a data de nascimento';
+                  }
+                  // Adicionar validação de formato se necessário
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _telefoneController,
@@ -127,13 +189,35 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
               ),
+              // CAMPO ENDEREÇO (MANTIDO COMO TEXTO LIVRE POR ENQUANTO)
               TextFormField(
                 controller: _enderecoController,
-                decoration: const InputDecoration(labelText: 'Endereço'),
+                decoration: const InputDecoration(labelText: 'Endereço Completo'),
+                maxLines: 2, // Aumenta um pouco para endereço
               ),
-              TextFormField(
-                controller: _convenioController,
+              // CAMPO CONVÊNIO (COM DROPDOWN)
+              DropdownButtonFormField<String>(
+                value: _selectedConvenio,
                 decoration: const InputDecoration(labelText: 'Convênio Médico'),
+                items: const [
+                  DropdownMenuItem(value: 'Particular', child: Text('Particular')),
+                  DropdownMenuItem(value: 'Unimed', child: Text('Unimed')),
+                  DropdownMenuItem(value: 'Epsemg', child: Text('Epsemg')),
+                  DropdownMenuItem(value: 'Bradesco Saúde', child: Text('Bradesco Saúde')),
+                  DropdownMenuItem(value: 'Amil', child: Text('Amil')),
+                  // Adicione mais convênios conforme necessário
+                ],
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedConvenio = newValue;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Selecione o convênio';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
               ElevatedButton(

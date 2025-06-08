@@ -8,7 +8,7 @@ import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.d
 import 'package:intl/intl.dart';
 
 class FinanceiroFormScreen extends StatefulWidget {
-  final int? idConsulta; // NOVO: Opcional, para pré-selecionar uma consulta
+  final int? idConsulta; // Opcional, para pré-selecionar uma consulta
   const FinanceiroFormScreen({super.key, this.idConsulta});
 
   static const String routeName = '/financeiro-form';
@@ -20,10 +20,11 @@ class FinanceiroFormScreen extends StatefulWidget {
 class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _valorController = TextEditingController();
-  final _formaPagamentoController = TextEditingController();
+  // REMOVIDO: final _formaPagamentoController = TextEditingController(); // Removido, pois usaremos Dropdown
   final _dataPagamentoController = TextEditingController();
 
   Consulta? _selectedConsulta;
+  String? _selectedFormaPagamento; // NOVO: Variável para a forma de pagamento selecionada
   List<Consulta> _consultas = [];
   bool _isLoadingDropdown = true;
 
@@ -48,7 +49,15 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
         if (widget.idConsulta != null) {
           _selectedConsulta = consultas.firstWhere(
             (c) => c.idConsulta == widget.idConsulta,
-            orElse: () => consultas.isEmpty ? null as Consulta : consultas.first, // Fallback se não encontrar
+            // Fallback se não encontrar ou se a lista estiver vazia
+            orElse: () {
+              // Se a consulta específica não for encontrada, e a lista não for vazia, selecione a primeira
+              if (consultas.isNotEmpty) {
+                return consultas.first;
+              }
+              // Caso contrário, retorna null (se for permitido que o valor seja nulo)
+              return null as Consulta; // Cast necessário para evitar erro de tipo
+            },
           );
         }
       });
@@ -68,6 +77,7 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
+      locale: const Locale('pt', 'BR'), // Opcional: para calendário em português
     );
     if (picked != null) {
       setState(() {
@@ -78,9 +88,9 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedConsulta == null) {
+      if (_selectedConsulta == null || _selectedFormaPagamento == null) { // NOVO: Validar forma de pagamento
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione a consulta.')),
+          const SnackBar(content: Text('Por favor, selecione a consulta e a forma de pagamento.')),
         );
         return;
       }
@@ -88,7 +98,7 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
       final financeiro = Financeiro(
         idConsulta: _selectedConsulta!.idConsulta,
         valor: double.tryParse(_valorController.text),
-        formaPagamento: _formaPagamentoController.text.isNotEmpty ? _formaPagamentoController.text : null,
+        formaPagamento: _selectedFormaPagamento, // Usar o valor do dropdown
         dataPagamento: _dataPagamentoController.text.isNotEmpty
             ? DateTime.tryParse(_dataPagamentoController.text)
             : null,
@@ -98,7 +108,10 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
       try {
         await _financeiroRepository.insertFinanceiro(financeiro);
         
-        // NOVO: Atualizar o status da consulta
+        // NOVO: Atualizar o status da consulta (se você tiver um campo 'status' no modelo Consulta)
+        // Se você adicionou um campo 'status' na tabela Consulta e no modelo Consulta,
+        // você pode descomentar e usar o método update aqui.
+        /*
         if (_selectedConsulta != null) {
           final updatedConsulta = Consulta(
             idConsulta: _selectedConsulta!.idConsulta,
@@ -109,16 +122,11 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
             idProfissional: _selectedConsulta!.idProfissional,
             idSala: _selectedConsulta!.idSala,
             idReceita: _selectedConsulta!.idReceita,
-            // Adicione um campo de status no modelo Consulta se você tiver
-            // Para esta iteração, vamos assumir que o "status de pagamento"
-            // é o que indica que a consulta foi concluída financeiramente
-            // ou você pode adicionar um campo 'status' na tabela Consulta.
-            // Exemplo hipotético:
-            // status: 'Paga',
+            status: 'Paga', // Exemplo: defina o status como 'Paga'
           );
-          // await _consultaRepository.updateConsulta(updatedConsulta);
-          // Se você adicionar um campo 'status' na tabela Consulta, descomente e use o método update.
+          await _consultaRepository.updateConsulta(updatedConsulta);
         }
+        */
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registro financeiro salvo com sucesso!')),
@@ -135,17 +143,18 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
 
   void _clearForm() {
     _valorController.clear();
-    _formaPagamentoController.clear();
-    // Manter a data atual na dataPagamentoController
+    // REMOVIDO: _formaPagamentoController.clear();
+    _dataPagamentoController.text = DateFormat('yyyy-MM-dd').format(DateTime.now()); // Resetar para data atual
     setState(() {
       _selectedConsulta = null;
+      _selectedFormaPagamento = null; // Limpa a forma de pagamento
     });
   }
 
   @override
   void dispose() {
     _valorController.dispose();
-    _formaPagamentoController.dispose();
+    // REMOVIDO: _formaPagamentoController.dispose();
     _dataPagamentoController.dispose();
     super.dispose();
   }
@@ -199,16 +208,34 @@ class _FinanceiroFormScreenState extends State<FinanceiroFormScreen> {
                         return null;
                       },
                     ),
-                    TextFormField(
-                      controller: _formaPagamentoController,
+                    const SizedBox(height: 10), // Adicionado para espaçar os campos
+
+                    // CAMPO FORMA DE PAGAMENTO (COM DROPDOWN)
+                    DropdownButtonFormField<String>(
+                      value: _selectedFormaPagamento,
                       decoration: const InputDecoration(labelText: 'Forma de Pagamento'),
+                      items: const [
+                        DropdownMenuItem(value: 'Dinheiro', child: Text('Dinheiro')),
+                        DropdownMenuItem(value: 'Cartão de Crédito', child: Text('Cartão de Crédito')),
+                        DropdownMenuItem(value: 'Cartão de Débito', child: Text('Cartão de Débito')),
+                        DropdownMenuItem(value: 'Pix', child: Text('Pix')),
+                        DropdownMenuItem(value: 'Transferência Bancária', child: Text('Transferência Bancária')),
+                        // Adicione mais formas de pagamento
+                      ],
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedFormaPagamento = newValue;
+                        });
+                      },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a forma de pagamento';
+                          return 'Por favor, selecione a forma de pagamento';
                         }
                         return null;
                       },
                     ),
+                    const SizedBox(height: 10),
+
                     TextFormField(
                       controller: _dataPagamentoController,
                       decoration: InputDecoration(
