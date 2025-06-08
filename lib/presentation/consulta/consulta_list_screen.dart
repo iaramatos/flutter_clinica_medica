@@ -3,12 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/domain/models/consulta.dart';
 import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.dart';
-import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart'; // Para obter nome do paciente
-import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart'; // Para obter nome do profissional
+import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
+import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
 import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_screen.dart';
-import 'package:intl/intl.dart'; // Para formatação de data e hora (adicione ao pubspec.yaml)
+import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
+import 'package:intl/intl.dart';
 
-class ConsultaListScreen extends StatefulWidget {
+class ConsultaListScreen extends StatefulWidget { // ESTA É A CLASSE DO WIDGET
   const ConsultaListScreen({super.key});
 
   static const String routeName = '/consulta-list';
@@ -17,7 +18,8 @@ class ConsultaListScreen extends StatefulWidget {
   State<ConsultaListScreen> createState() => _ConsultaListScreenState();
 }
 
-class _ConsultaListScreenState extends State<ConsultaListScreen> {
+class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A CLASSE DO ESTADO
+  // TODAS AS VARIÁVEIS E MÉTODOS QUE MANIPULAM O ESTADO DEVEM ESTAR AQUI DENTRO
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
   final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
@@ -36,7 +38,6 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
       _isLoading = true;
     });
     try {
-      // Usaremos o getAllConsultas do repositório que já faz o JOIN
       final consultas = await _consultaRepository.getAllConsultas();
       setState(() {
         _consultas = consultas;
@@ -111,7 +112,6 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: FutureBuilder<List<String>>(
-                        // FutureBuilder para carregar nomes de paciente e profissional
                         future: Future.wait([
                           _getPacienteNome(consulta.idPaciente),
                           _getProfissionalNome(consulta.idProfissional),
@@ -145,10 +145,20 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.blue),
                                   onPressed: () async {
-                                    // Implementar edição futuramente
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Funcionalidade de edição futura.')),
                                     );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.payment, color: Colors.green),
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => FinanceiroFormScreen(
+                                        idConsulta: consulta.idConsulta,
+                                      ),
+                                    ));
+                                    _loadConsultas();
                                   },
                                 ),
                                 IconButton(
