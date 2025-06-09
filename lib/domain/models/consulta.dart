@@ -1,4 +1,4 @@
-// lib/models/consulta.dart
+// lib/domain/models/consulta.dart
 
 class Consulta {
   int? idConsulta;
@@ -8,7 +8,8 @@ class Consulta {
   int? idPaciente;
   int? idProfissional;
   int? idSala;
-  int? idReceita; // Chave estrangeira para Receita
+  int? idReceita;
+  int? idProcedimentoPrincipal; // NOVO: Adicionado para o procedimento principal
 
   Consulta({
     this.idConsulta,
@@ -19,6 +20,7 @@ class Consulta {
     this.idProfissional,
     this.idSala,
     this.idReceita,
+    this.idProcedimentoPrincipal, // NOVO: Adicionado ao construtor
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +33,7 @@ class Consulta {
       'idProfissional': idProfissional,
       'idSala': idSala,
       'idReceita': idReceita,
+      'idProcedimentoPrincipal': idProcedimentoPrincipal, // NOVO: Adicionado ao toMap
     };
   }
 
@@ -44,11 +47,12 @@ class Consulta {
       idProfissional: map['idProfissional'] as int?,
       idSala: map['idSala'] as int?,
       idReceita: map['idReceita'] as int?,
+      idProcedimentoPrincipal: map['idProcedimentoPrincipal'] as int?, // NOVO: Adicionado ao fromMap
     );
   }
 
   @override
   String toString() {
-    return 'Consulta(idConsulta: $idConsulta, dataHora: $dataHora, idPaciente: $idPaciente)';
+    return 'Consulta(idConsulta: $idConsulta, dataHora: $dataHora, idPaciente: $idPaciente, idProfissional: $idProfissional)';
   }
 }

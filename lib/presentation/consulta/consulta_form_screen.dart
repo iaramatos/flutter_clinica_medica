@@ -5,10 +5,16 @@ import 'package:flutter_clinica_medica/domain/models/consulta.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
 import 'package:flutter_clinica_medica/domain/models/profissional.dart';
 import 'package:flutter_clinica_medica/domain/models/sala.dart';
+import 'package:flutter_clinica_medica/domain/models/procedimento.dart'; // NOVO IMPORT: Modelo Procedimento
+import 'package:flutter_clinica_medica/domain/models/conta_receber.dart'; // NOVO IMPORT: Modelo ContaReceber
+
 import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/sala_repository.dart';
+import 'package:flutter_clinica_medica/domain/repositories/procedimento_repository.dart'; // NOVO IMPORT: Repositório de Procedimento
+import 'package:flutter_clinica_medica/domain/repositories/conta_receber_repository.dart'; // NOVO IMPORT: Repositório de ContaReceber
+
 import 'package:intl/intl.dart';
 
 class ConsultaFormScreen extends StatefulWidget {
@@ -30,16 +36,21 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
   Paciente? _selectedPaciente;
   Profissional? _selectedProfissional;
   Sala? _selectedSala;
+  Procedimento? _selectedProcedimentoPrincipal; // NOVO: Campo para o procedimento principal
 
   List<Paciente> _pacientes = [];
   List<Profissional> _profissionais = [];
   List<Sala> _salas = [];
+  List<Procedimento> _procedimentos = []; // NOVO: Lista de procedimentos
   bool _isLoadingDropdowns = true;
 
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
   final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
   final SalaRepository _salaRepository = SalaRepository();
+  final ProcedimentoRepository _procedimentoRepository = ProcedimentoRepository(); // NOVO: Repositório de Procedimento
+  final ContaReceberRepository _contaReceberRepository = ContaReceberRepository(); // NOVO: Instância do repositório
+
 
   @override
   void initState() {
@@ -57,11 +68,13 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
       final pacientes = await _pacienteRepository.getAllPacientes();
       final profissionais = await _profissionalRepository.getAllProfissionais();
       final salas = await _salaRepository.getAllSalas();
+      final procedimentos = await _procedimentoRepository.getAllProcedimentos(); // NOVO: Carrega procedimentos
 
       setState(() {
         _pacientes = pacientes;
         _profissionais = profissionais;
         _salas = salas;
+        _procedimentos = procedimentos; // Atualiza lista de procedimentos
         _isLoadingDropdowns = false;
 
         if (widget.consulta != null) {
@@ -76,6 +89,10 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
           _selectedSala = salas.firstWhere(
             (s) => s.idSala == widget.consulta!.idSala,
             orElse: () => salas.isEmpty ? null as Sala : salas.first,
+          );
+          _selectedProcedimentoPrincipal = procedimentos.firstWhere( // NOVO: Pré-seleciona procedimento
+            (proc) => proc.idProcedimento == widget.consulta!.idProcedimentoPrincipal,
+            orElse: () => procedimentos.isEmpty ? null as Procedimento : procedimentos.first,
           );
         }
       });
@@ -135,7 +152,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
           c.dataHora.minute == dataHora.minute) {
         
         // Conflito de Profissional
-        if (c.idProfissional == profissionalId) { // CORRIGIDO: profissionalId
+        if (c.idProfissional == profissionalId) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Conflito: Profissional já tem outra consulta neste horário.'), backgroundColor: Colors.red),
             );
@@ -155,18 +172,20 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedPaciente == null || _selectedProfissional == null || _selectedSala == null) {
+      // Validar se todos os campos obrigatórios foram selecionados
+      if (_selectedPaciente == null || _selectedProfissional == null || _selectedSala == null || _selectedProcedimentoPrincipal == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione o Paciente, Profissional e a Sala.')),
+          const SnackBar(content: Text('Por favor, selecione Paciente, Profissional, Sala e Procedimento.')),
         );
         return;
       }
 
       final parsedDataHora = DateFormat('dd/MM/yyyy HH:mm').parse(_dataHoraController.text);
 
+      // Verificar conflito de agendamento (RN02)
       final hasConflict = await _hasConflict(parsedDataHora, _selectedProfissional!.idProfissional!, _selectedSala!.idSala, widget.consulta?.idConsulta);
       if (hasConflict) {
-        return;
+        return; // Retorna se houver conflito (mensagem já exibida)
       }
 
       final consulta = Consulta(
@@ -177,23 +196,47 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
         idPaciente: _selectedPaciente!.idPaciente,
         idProfissional: _selectedProfissional!.idProfissional,
         idSala: _selectedSala!.idSala,
-        idReceita: null,
+        idReceita: null, // Deixando como null por enquanto
+        idProcedimentoPrincipal: _selectedProcedimentoPrincipal!.idProcedimento,
       );
 
       try {
+        int consultaId;
         if (consulta.idConsulta == null) {
-          await _consultaRepository.insertConsulta(consulta);
+          consultaId = await _consultaRepository.insertConsulta(consulta);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Consulta agendada com sucesso!')),
           );
         } else {
-          await _consultaRepository.updateConsulta(consulta);
+          consultaId = await _consultaRepository.updateConsulta(consulta);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Consulta atualizada com sucesso!')),
           );
         }
+
+        // NOVO: Gerar Conta a Receber automaticamente se for Paciente Particular
+        if (_selectedPaciente != null && _selectedPaciente!.convenio?.toLowerCase() == 'particular' && _selectedProcedimentoPrincipal != null) {
+          final procedimentoAssociado = _procedimentos.firstWhere(
+            (p) => p.idProcedimento == _selectedProcedimentoPrincipal!.idProcedimento,
+            orElse: () => null as Procedimento,
+          );
+          if (procedimentoAssociado != null) {
+            final contaReceber = ContaReceber(
+              descricao: 'Consulta de ${procedimentoAssociado.nome} - Paciente: ${_selectedPaciente!.nome}',
+              valor: procedimentoAssociado.valor,
+              vencimento: consulta.dataHora.add(const Duration(days: 7)), // Exemplo: 7 dias para vencimento
+              status: 'Aberto',
+            );
+            await _contaReceberRepository.insertContaReceber(contaReceber);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Conta a Receber gerada automaticamente para o paciente particular!')),
+            );
+          }
+        }
+
+
         _clearForm();
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); // Volta para a lista após salvar
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao agendar consulta: $e')),
@@ -210,6 +253,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
       _selectedPaciente = null;
       _selectedProfissional = null;
       _selectedSala = null;
+      _selectedProcedimentoPrincipal = null;
     });
   }
 
@@ -285,7 +329,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // NOVO CAMPO: Seleção de Sala
+                    // Campo: Seleção de Sala
                     DropdownButtonFormField<Sala>(
                       value: _selectedSala,
                       decoration: const InputDecoration(labelText: 'Sala de Atendimento'),
@@ -309,7 +353,31 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // CAMPO DE DATA E HORA (COM PICKER E FORMATO BRASILEIRO)
+                    // Campo: Seleção de Procedimento Principal
+                    DropdownButtonFormField<Procedimento>(
+                      value: _selectedProcedimentoPrincipal,
+                      decoration: const InputDecoration(labelText: 'Procedimento Principal'),
+                      items: _procedimentos.map((proc) {
+                        return DropdownMenuItem(
+                          value: proc,
+                          child: Text('${proc.nome} (R\$ ${proc.valor.toStringAsFixed(2)})'),
+                        );
+                      }).toList(),
+                      onChanged: (Procedimento? newValue) {
+                        setState(() {
+                          _selectedProcedimentoPrincipal = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Selecione o procedimento principal';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Campo de Data e Hora (com picker e formato brasileiro)
                     TextFormField(
                       controller: _dataHoraController,
                       decoration: InputDecoration(
@@ -319,7 +387,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
                           onPressed: () => _selectDataHora(context),
                         ),
                       ),
-                      readOnly: true, // Impede digitação manual
+                      readOnly: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor, insira a data e hora da consulta';

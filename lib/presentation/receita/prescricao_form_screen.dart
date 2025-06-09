@@ -25,6 +25,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
   // REMOVIDO: final _dosagemController = TextEditingController();
   // REMOVIDO: final _viaController = TextEditingController();
   // REMOVIDO: final _frequenciaController = TextEditingController();
+  final _quantidadeController = TextEditingController(); // NOVO: Controller para quantidade
 
   Paciente? _selectedPaciente;
   Medicamento? _selectedMedicamento;
@@ -121,6 +122,15 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
         );
         return;
       }
+      
+      final quantidade = int.tryParse(_quantidadeController.text); // Pega a quantidade
+      if (quantidade == null || quantidade <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Por favor, insira uma quantidade válida para o medicamento.')),
+          );
+          return;
+      }
+
 
       // Chamar a verificação de interação também ao submeter, para garantir.
       _checkInteracoesMedicamentosas(_selectedMedicamento);
@@ -132,10 +142,34 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
         dosagem: _selectedDosagem, // Usar o valor do dropdown
         via: _selectedVia,         // Usar o valor do dropdown
         frequencia: _selectedFrequencia, // Usar o valor do dropdown
+        quantidade: quantidade, // NOVO: Atribui a quantidade
       );
 
       try {
         await _prescricaoRepository.insertPrescricaoMedicamento(prescricao);
+        
+        // NOVO: BAIXA AUTOMÁTICA NO ESTOQUE (RN07)
+        if (_selectedMedicamento != null && _selectedMedicamento!.estoqueAtual != null) {
+          final novoEstoque = _selectedMedicamento!.estoqueAtual! - quantidade;
+          if (novoEstoque < 0) {
+             ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Estoque insuficiente para esta prescrição!'), backgroundColor: Colors.red),
+             );
+             // Opcional: Você pode querer impedir a prescrição aqui se o estoque for negativo
+             // return;
+          }
+          final medicamentoAtualizado = Medicamento(
+            idMedicamento: _selectedMedicamento!.idMedicamento,
+            nome: _selectedMedicamento!.nome,
+            descricao: _selectedMedicamento!.descricao,
+            estoqueAtual: novoEstoque,
+          );
+          await _medicamentoRepository.updateMedicamento(medicamentoAtualizado);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Estoque de ${_selectedMedicamento!.nome} atualizado para $novoEstoque.')),
+          );
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Prescrição adicionada com sucesso!')),
         );
@@ -149,9 +183,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
   }
 
   void _clearForm() {
-    // REMOVIDO: _dosagemController.clear(); // Não precisa limpar controllers que não existem
-    // REMOVIDO: _viaController.clear();     // Não precisa limpar controllers que não existem
-    // REMOVIDO: _frequenciaController.clear(); // Não precisa limpar controllers que não existem
+    _quantidadeController.clear(); // Limpa quantidade
     setState(() {
       _selectedMedicamento = null;
       _selectedPaciente = null;
@@ -163,9 +195,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
 
   @override
   void dispose() {
-    // REMOVIDO: _dosagemController.dispose();
-    // REMOVIDO: _viaController.dispose();
-    // REMOVIDO: _frequenciaController.dispose();
+    _quantidadeController.dispose(); // Dispose do controller
     super.dispose();
   }
 
@@ -239,6 +269,20 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
                     ),
                     const SizedBox(height: 10),
 
+                    // CAMPO QUANTIDADE (NOVO)
+                    TextFormField(
+                      controller: _quantidadeController,
+                      decoration: const InputDecoration(labelText: 'Quantidade'),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty || int.tryParse(value) == null || int.parse(value) <= 0) {
+                          return 'Por favor, insira uma quantidade válida';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
                     // CAMPO DOSAGEM (COM DROPDOWN)
                     DropdownButtonFormField<String>(
                       value: _selectedDosagem,
@@ -280,7 +324,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
                         });
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty) { // Adicionado validator
+                        if (value == null || value.isEmpty) {
                           return 'Por favor, insira a via de administração';
                         }
                         return null;
@@ -305,7 +349,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
                         });
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty) { // Adicionado validator
+                        if (value == null || value.isEmpty) {
                           return 'Por favor, insira a frequência';
                         }
                         return null;
