@@ -1,4 +1,4 @@
-// lib/models/prescricao_medicamento.dart
+// lib/domain/models/prescricao_medicamento.dart
 
 class PrescricaoMedicamento {
   int? idPrescricao;
@@ -7,6 +7,7 @@ class PrescricaoMedicamento {
   String? dosagem;
   String? via;
   String? frequencia;
+  int quantidade; // NOVO: Quantidade
 
   PrescricaoMedicamento({
     this.idPrescricao,
@@ -15,6 +16,7 @@ class PrescricaoMedicamento {
     this.dosagem,
     this.via,
     this.frequencia,
+    required this.quantidade, // NOVO: Obrigatório
   });
 
   Map<String, dynamic> toMap() {
@@ -25,6 +27,7 @@ class PrescricaoMedicamento {
       'dosagem': dosagem,
       'via': via,
       'frequencia': frequencia,
+      'quantidade': quantidade, // NOVO
     };
   }
 
@@ -36,11 +39,12 @@ class PrescricaoMedicamento {
       dosagem: map['dosagem'] as String?,
       via: map['via'] as String?,
       frequencia: map['frequencia'] as String?,
+      quantidade: map['quantidade'] as int, // NOVO
     );
   }
 
   @override
   String toString() {
-    return 'PrescricaoMedicamento(idPrescricao: $idPrescricao, idReceita: $idReceita, idMedicamento: $idMedicamento)';
+    return 'PrescricaoMedicamento(idPrescricao: $idPrescricao, idReceita: $idReceita, idMedicamento: $idMedicamento, quantidade: $quantidade)';
   }
 }

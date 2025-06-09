@@ -17,8 +17,16 @@ import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
+
 import 'package:flutter_clinica_medica/utils/auth_manager.dart';
 import 'package:flutter_clinica_medica/presentation/auth/login_screen.dart';
+
+// NOVO IMPORT PARA O MÓDULO DE PROCEDIMENTOS
+import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_form_screen.dart'; // Opcional: Se precisar de acesso direto ao form
+
+
+import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
 
 class MainDashboardScreen extends StatelessWidget {
   const MainDashboardScreen({super.key});
@@ -30,14 +38,17 @@ class MainDashboardScreen extends StatelessWidget {
     final authManager = AuthManager();
     final currentUser = authManager.currentUser;
 
+    // Mapeamento de quais módulos cada tipo de usuário pode ver/acessar
     final Map<String, List<String>> permissions = {
       'admin': [
         'pacientes', 'profissionais', 'consultas', 'medicamentos', 'prescricoes',
         'pagamento', 'tipos_exames', 'resultados_exames', 'salas',
         'contas_receber', 'contas_pagar', 'relatorio_financeiro',
+        'procedimentos', // NOVO: Admin pode gerenciar procedimentos
       ],
       'medico': [
         'pacientes', 'consultas', 'medicamentos', 'prescricoes', 'resultados_exames',
+        'procedimentos', // NOVO: Médico pode ver/gerenciar procedimentos
       ],
       'enfermeiro': [
         'pacientes', 'consultas', 'medicamentos', 'resultados_exames',
@@ -84,10 +95,10 @@ class MainDashboardScreen extends StatelessWidget {
             if (canAccess('consultas'))
               _buildDashboardButton(context, 'Consultas (Agenda)', ConsultaListScreen.routeName, Icons.calendar_today),
             
-            // Módulos Auxiliares - SÓ EXIBIR A SEÇÃO SE HOUVER ALGO PARA EXIBIR NELA
-            if (canAccess('medicamentos') || canAccess('prescricoes') || canAccess('pagamento'))
+            // Módulos Auxiliares
+            if (allowedModules.any((m) => ['medicamentos', 'prescricoes', 'pagamento'].contains(m)))
               const Divider(height: 30),
-            if (canAccess('medicamentos') || canAccess('prescricoes') || canAccess('pagamento'))
+            if (allowedModules.any((m) => ['medicamentos', 'prescricoes', 'pagamento'].contains(m)))
               _buildSectionTitle(context, 'Módulos Auxiliares'),
             if (canAccess('medicamentos'))
               _buildDashboardButton(context, 'Medicamentos', MedicamentoListScreen.routeName, Icons.medication),
@@ -96,30 +107,32 @@ class MainDashboardScreen extends StatelessWidget {
             if (canAccess('pagamento'))
               _buildDashboardButton(context, 'Registrar Pagamento', FinanceiroFormScreen.routeName, Icons.payment),
             
-            // Módulos de Exames - SÓ EXIBIR A SEÇÃO SE HOUVER ALGO PARA EXIBIR NELA
-            if (canAccess('tipos_exames') || canAccess('resultados_exames'))
+            // Módulos de Exames
+            if (allowedModules.any((m) => ['tipos_exames', 'resultados_exames'].contains(m)))
               const Divider(height: 30),
-            if (canAccess('tipos_exames') || canAccess('resultados_exames'))
+            if (allowedModules.any((m) => ['tipos_exames', 'resultados_exames'].contains(m)))
               _buildSectionTitle(context, 'Módulos de Exames'),
             if (canAccess('tipos_exames'))
               _buildDashboardButton(context, 'Tipos de Exames', ExameListScreen.routeName, Icons.science),
-            if (canAccess('resultados_exames')) // Tanto médicos quanto pacientes podem ver
+            if (canAccess('resultados_exames'))
               _buildDashboardButton(context, 'Registrar Resultado Exame', ResultadoExameFormScreen.routeName, Icons.assignment),
             if (canAccess('resultados_exames'))
               _buildDashboardButton(context, 'Ver Resultados Exames', ResultadoExameListScreen.routeName, Icons.file_copy),
 
-            // Módulos de Gestão - SÓ EXIBIR A SEÇÃO SE HOUVER ALGO PARA EXIBIR NELA
-            if (canAccess('salas'))
+            // Módulos de Gestão (agora com Procedimentos)
+            if (allowedModules.any((m) => ['salas', 'procedimentos'].contains(m)))
               const Divider(height: 30),
-            if (canAccess('salas'))
+            if (allowedModules.any((m) => ['salas', 'procedimentos'].contains(m)))
               _buildSectionTitle(context, 'Módulos de Gestão'),
             if (canAccess('salas'))
               _buildDashboardButton(context, 'Salas', SalaListScreen.routeName, Icons.meeting_room),
-
-            // Módulos Financeiros Detalhados - SÓ EXIBIR A SEÇÃO SE HOUVER ALGO PARA EXIBIR NELA
-            if (canAccess('contas_receber') || canAccess('contas_pagar') || canAccess('relatorio_financeiro'))
+            if (canAccess('procedimentos')) // NOVO BOTÃO: Módulo de Procedimentos
+              _buildDashboardButton(context, 'Procedimentos', ProcedimentoListScreen.routeName, Icons.medical_information),
+            
+            // Módulos Financeiros Detalhados
+            if (allowedModules.any((m) => ['contas_receber', 'contas_pagar', 'relatorio_financeiro'].contains(m)))
               const Divider(height: 30),
-            if (canAccess('contas_receber') || canAccess('contas_pagar') || canAccess('relatorio_financeiro'))
+            if (allowedModules.any((m) => ['contas_receber', 'contas_pagar', 'relatorio_financeiro'].contains(m)))
               _buildSectionTitle(context, 'Módulos Financeiros Detalhados'),
             if (canAccess('contas_receber'))
               _buildDashboardButton(context, 'Contas a Receber', ContaReceberListScreen.routeName, Icons.attach_money),
@@ -127,7 +140,7 @@ class MainDashboardScreen extends StatelessWidget {
               _buildDashboardButton(context, 'Contas a Pagar', ContaPagarListScreen.routeName, Icons.money_off),
             if (canAccess('relatorio_financeiro'))
               _buildDashboardButton(context, 'Relatório Financeiro', RelatorioFinanceiroScreen.routeName, Icons.bar_chart),
-          ].whereType<Widget>().toList(), // .whereType<Widget>().toList() é importante para filtrar 'null'
+          ].whereType<Widget>().toList(),
         ),
       ),
     );

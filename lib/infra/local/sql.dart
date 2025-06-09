@@ -5,16 +5,16 @@ const String sqlCreateTable = '''
 CREATE TABLE Usuario (
     idUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
-    passwordHash TEXT NOT NULL, -- Senha com hash (nunca armazene senhas em texto puro!)
-    salt TEXT NOT NULL,         -- Salt para o hash da senha
+    passwordHash TEXT NOT NULL,
+    salt TEXT NOT NULL,
     email VARCHAR(100) UNIQUE,
-    tipo TEXT NOT NULL          -- 'admin', 'medico', 'enfermeiro', 'recepcionista', 'paciente'
+    tipo TEXT NOT NULL
 );
 
--- Tabela de pacientes (ADICIONAR CHAVE ESTRANGEIRA idUsuario)
+-- Tabela de pacientes
 CREATE TABLE Paciente (
     idPaciente INTEGER PRIMARY KEY AUTOINCREMENT,
-    idUsuario INT, -- NOVO: Chave estrangeira para Usuario
+    idUsuario INT,
     nome VARCHAR(100) NOT NULL,
     cpf VARCHAR(14) UNIQUE NOT NULL,
     dataNascimento TEXT,
@@ -27,20 +27,20 @@ CREATE TABLE Paciente (
     FOREIGN KEY (idUsuario) REFERENCES Usuario(idUsuario) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Tabela de profissionais da saúde (ADICIONAR CHAVE ESTRANGEIRA idUsuario)
+-- Tabela de profissionais da saúde
 CREATE TABLE Profissional (
     idProfissional INTEGER PRIMARY KEY AUTOINCREMENT,
-    idUsuario INT, -- NOVO: Chave estrangeira para Usuario
+    idUsuario INT,
     nome VARCHAR(100) NOT NULL,
     especialidade VARCHAR(100),
     registro VARCHAR(50),
     email VARCHAR(100),
     telefone VARCHAR(15),
-    tipoUsuario TEXT NOT NULL, -- Manter para tipos de profissional específicos
+    tipoUsuario TEXT NOT NULL,
     FOREIGN KEY (idUsuario) REFERENCES Usuario(idUsuario) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Tabela de salas (consultórios, laboratórios, etc.)
+-- Tabela de salas
 CREATE TABLE Sala (
     idSala INTEGER PRIMARY KEY AUTOINCREMENT,
     nome VARCHAR(50),
@@ -55,6 +55,14 @@ CREATE TABLE Receita (
     observacoes TEXT
 );
 
+-- Tabela de Procedimentos
+CREATE TABLE Procedimento (
+    idProcedimento INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    valor REAL NOT NULL
+);
+
 -- Tabela de consultas
 CREATE TABLE Consulta (
     idConsulta INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,10 +73,12 @@ CREATE TABLE Consulta (
     idProfissional INT,
     idSala INT,
     idReceita INT,
+    idProcedimentoPrincipal INT,
     FOREIGN KEY (idPaciente) REFERENCES Paciente(idPaciente) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idProfissional) REFERENCES Profissional(idProfissional) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idSala) REFERENCES Sala(idSala) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    FOREIGN KEY (idReceita) REFERENCES Receita(idReceita) ON DELETE NO ACTION ON UPDATE NO ACTION
+    FOREIGN KEY (idReceita) REFERENCES Receita(idReceita) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (idProcedimentoPrincipal) REFERENCES Procedimento(idProcedimento) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Tabela de exames
@@ -97,7 +107,7 @@ CREATE TABLE Medicamento (
     estoqueAtual INT
 );
 
--- Prescrição dos medicamentos por receita
+-- Prescrição dos medicamentos por receita (ADICIONADO QUANTIDADE AQUI)
 CREATE TABLE PrescricaoMedicamento (
     idPrescricao INTEGER PRIMARY KEY AUTOINCREMENT,
     idReceita INT,
@@ -105,6 +115,7 @@ CREATE TABLE PrescricaoMedicamento (
     dosagem VARCHAR(100),
     via VARCHAR(50),
     frequencia VARCHAR(100),
+    quantidade INT NOT NULL, -- <<<< NOVO: QUANTIDADE PARA BAIXA DE ESTOQUE >>>>
     FOREIGN KEY (idReceita) REFERENCES Receita(idReceita) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idMedicamento) REFERENCES Medicamento(idMedicamento) ON DELETE NO ACTION ON UPDATE NO ACTION
 );

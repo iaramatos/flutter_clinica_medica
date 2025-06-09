@@ -31,9 +31,13 @@ import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_
 import 'package:flutter_clinica_medica/presentation/auth/login_screen.dart';
 import 'package:flutter_clinica_medica/presentation/auth/register_screen.dart';
 
+// NOVO IMPORT PARA O MÓDULO DE PROCEDIMENTOS
+import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_form_screen.dart';
+
 // IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart'; // Mantenha este import, pois ele já é usado para formatação de data
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +53,7 @@ void main() async {
   /*
   import 'package:flutter_clinica_medica/domain/models/usuario.dart';
   import 'package:flutter_clinica_medica/domain/repositories/usuario_repository.dart';
+  // Note: 'crypto' and 'pointycastle' are imported via password_util.dart if needed
   import 'package:flutter_clinica_medica/utils/password_util.dart';
 
   final usuarioRepo = UsuarioRepository();
@@ -69,8 +74,28 @@ void main() async {
     } else {
       print('Usuário admin de teste já existe.');
     }
+
+    // Você também pode querer adicionar aqui código para inserir um paciente/profissional inicial
+    // e vinculá-lo ao ID do usuário criado, para testar a vinculação.
+    // Exemplo (comentado):
+    // import 'package:flutter_clinica_medica/domain/models/paciente.dart';
+    // import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
+    // final pacienteRepo = PacienteRepository();
+    // final testPaciente = Paciente(
+    //   idUsuario: adminUser.idUsuario, // Vincula ao admin user
+    //   nome: 'Paciente Admin Teste',
+    //   cpf: '111.222.333-44',
+    //   dataNascimento: DateTime(2000,1,1),
+    //   email: 'admin@paciente.com',
+    //   convenio: 'Particular',
+    //   alergias: 'Nenhuma',
+    //   condicoesPreExistentes: 'Nenhuma'
+    // );
+    // await pacienteRepo.insertPaciente(testPaciente);
+    // print('Paciente de teste para admin criado!');
+
   } catch (e) {
-    print('Erro durante inserção de usuário admin de teste: $e');
+    print('Erro durante inserção de usuário/dados de teste: $e');
   }
   */
   // --- FIM DO CÓDIGO TEMPORÁRIO ---
@@ -142,6 +167,10 @@ class ClinicaMedicaApp extends StatelessWidget {
         ExameListScreen.routeName: (context) => const ExameListScreen(),
         ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
         ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
+
+        // Rotas de Procedimentos (NOVO PARA ITERAÇÃO 9)
+        ProcedimentoListScreen.routeName: (context) => const ProcedimentoListScreen(),
+        ProcedimentoFormScreen.routeName: (context) => const ProcedimentoFormScreen(),
 
         // Rota do Dashboard Principal (acessado após login)
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
