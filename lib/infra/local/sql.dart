@@ -10,7 +10,9 @@ CREATE TABLE Paciente (
     telefone VARCHAR(15),
     email VARCHAR(100),
     endereco VARCHAR(255),
-    convenio VARCHAR(100)
+    convenio VARCHAR(100), -- CORRIGIDO: Vírgula adicionada aqui
+    alergias TEXT,
+    condicoesPreExistentes TEXT
 );
 
 -- Tabela de profissionais da saúde
@@ -68,6 +70,7 @@ CREATE TABLE ResultadoExame (
     idConsulta INT,
     idExame INT,
     resultado TEXT,
+    urlDocumento TEXT, -- NOVO: Para um link/URL do documento (confirmado aqui)
     FOREIGN KEY (idConsulta) REFERENCES Consulta(idConsulta) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idExame) REFERENCES Exame(idExame) ON DELETE NO ACTION ON UPDATE NO ACTION
 );

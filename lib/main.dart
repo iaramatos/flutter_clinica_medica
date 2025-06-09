@@ -14,31 +14,43 @@ import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_scre
 import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
+import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart'; // NOVO IMPORT: Form de Sala
+import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart'; // NOVO IMPORT: Lista de Sala
+import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart'; // NOVO IMPORT: Lista de Tipos de Exame
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart'; // NOVO IMPORT: Form de Resultado de Exame
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart'; // NOVO IMPORT: Lista de Resultados de Exame
 
-// ADICIONE ESTES DOIS IMPORTS PARA LOCALIZAÇÃO
+// IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart'; // Mantenha este import, pois ele já é usado para formatação de data
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); 
+  WidgetsFlutterBinding.ensureInitialized();
 
-  final LocalDatabase localDatabase = LocalDatabase(); 
-  await localDatabase.openDb(); 
+  final LocalDatabase localDatabase = LocalDatabase();
+  await localDatabase.openDb();
 
-  print('Banco de dados da clínica aberto com sucesso!'); 
+  print('Banco de dados da clínica aberto com sucesso!');
 
-  // --- CÓDIGO TEMPORÁRIO PARA TESTE DE INSERÇÃO (REMOVER DEPOIS DA IT4) ---
+  // --- CÓDIGO TEMPORÁRIO PARA TESTE DE INSERÇÃO (REMOVER DEPOIS DA IT4/Release 1) ---
   // Mantenha os de paciente e profissional se ainda não tiver dados de teste
   // Remova-os ou comente-os após ter dados suficientes para testar
-  // Exemplo de como você poderia inserir dados de teste se necessário:
   /*
   import 'package:flutter_clinica_medica/domain/models/paciente.dart';
   import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
   import 'package:flutter_clinica_medica/domain/models/profissional.dart';
   import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
+  import 'package:flutter_clinica_medica/domain/models/sala.dart';
+  import 'package:flutter_clinica_medica/domain/repositories/sala_repository.dart';
+  import 'package:flutter_clinica_medica/domain/models/exame.dart';
+  import 'package:flutter_clinica_medica/domain/repositories/exame_repository.dart';
+
 
   final pacienteRepo = PacienteRepository();
   final profissionalRepo = ProfissionalRepository();
+  final salaRepo = SalaRepository();
+  final exameRepo = ExameRepository();
+
   try {
     // Inserir Paciente de Teste
     final existingPaciente = await pacienteRepo.getPacienteById(1);
@@ -51,6 +63,8 @@ void main() async {
         email: 'maria.silva@email.com',
         endereco: 'Rua A, 123',
         convenio: 'Particular',
+        alergias: 'Nenhuma',
+        condicoesPreExistentes: 'Asma'
       );
       await pacienteRepo.insertPaciente(testPaciente);
       print('Paciente de teste inserido com sucesso!');
@@ -74,6 +88,34 @@ void main() async {
     } else {
       print('Profissional de teste já existe.');
     }
+
+    // Inserir Sala de Teste
+    final existingSala = await salaRepo.getSalaById(1);
+    if (existingSala == null) {
+      final testSala = Sala(
+        nome: 'Consultório 1',
+        tipo: 'Consultório',
+        capacidade: 1
+      );
+      await salaRepo.insertSala(testSala);
+      print('Sala de teste inserida com sucesso!');
+    } else {
+      print('Sala de teste já existe.');
+    }
+
+    // Inserir Exame de Teste
+    final existingExame = await exameRepo.getExameById(1);
+    if (existingExame == null) {
+      final testExame = Exame(
+        nome: 'Hemograma Completo',
+        descricao: 'Exame de sangue para contagem de células.'
+      );
+      await exameRepo.insertExame(testExame);
+      print('Exame de teste inserido com sucesso!');
+    } else {
+      print('Exame de teste já existe.');
+    }
+
   } catch (e) {
     print('Erro durante inserção de dados de teste: $e');
   }
@@ -96,17 +138,17 @@ class ClinicaMedicaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      // --- ADICIONE ESTAS LINHAS AQUI PARA LOCALIZAÇÃO ---
+      // CONFIGURAÇÕES DE LOCALIZAÇÃO (ESSENCIAL PARA DATE/TIME PICKERS)
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate, // Necessário para iOS-style widgets
+        GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en', ''), // Inglês
         Locale('pt', 'BR'), // Português do Brasil
       ],
-      // --- FIM DAS LINHAS A SEREM ADICIONADAS ---
+      // Rota inicial do aplicativo (Dashboard)
       initialRoute: MainDashboardScreen.routeName,
       routes: {
         // Rotas de Paciente
@@ -129,6 +171,15 @@ class ClinicaMedicaApp extends StatelessWidget {
 
         // Rotas Financeiras
         FinanceiroFormScreen.routeName: (context) => const FinanceiroFormScreen(),
+
+        // Rotas de Salas
+        SalaListScreen.routeName: (context) => const SalaListScreen(),
+        SalaFormScreen.routeName: (context) => const SalaFormScreen(), // Opcional, se precisar de rota direta
+
+        // Rotas de Exames e Resultados de Exames
+        ExameListScreen.routeName: (context) => const ExameListScreen(),
+        ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
+        ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
 
         // Rota do Dashboard Principal
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),

@@ -5,11 +5,11 @@ import 'package:flutter_clinica_medica/domain/models/consulta.dart';
 import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
-import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_screen.dart'; // Importar o formulário de consulta
+import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart'; // Importar o formulário financeiro
 import 'package:intl/intl.dart';
 
-class ConsultaListScreen extends StatefulWidget { // ESTA É A CLASSE DO WIDGET
+class ConsultaListScreen extends StatefulWidget {
   const ConsultaListScreen({super.key});
 
   static const String routeName = '/consulta-list';
@@ -18,8 +18,7 @@ class ConsultaListScreen extends StatefulWidget { // ESTA É A CLASSE DO WIDGET
   State<ConsultaListScreen> createState() => _ConsultaListScreenState();
 }
 
-class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A CLASSE DO ESTADO
-  // TODAS AS VARIÁVEIS E MÉTODOS QUE MANIPULAM O ESTADO DEVEM ESTAR AQUI DENTRO
+class _ConsultaListScreenState extends State<ConsultaListScreen> {
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
   final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
@@ -80,6 +79,20 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A 
     return profissional?.nome ?? 'Profissional Desconhecido';
   }
 
+  // NOVO MÉTODO: Simular envio de lembrete
+  Future<void> _sendReminder(Consulta consulta) async {
+    final pacienteNome = await _getPacienteNome(consulta.idPaciente);
+    final formattedTime = DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Lembrete enviado para $pacienteNome sobre a consulta em $formattedTime.'),
+        backgroundColor: Colors.orange, // Cor de destaque para o lembrete
+        duration: const Duration(seconds: 3),
+      ),
+    );
+    // Em um sistema real, aqui você chamaria um serviço de backend para enviar e-mail/SMS
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,64 +124,73 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> { // ESTA É A 
                     final consulta = _consultas[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: FutureBuilder<List<String>>(
-                        future: Future.wait([
-                          _getPacienteNome(consulta.idPaciente),
-                          _getProfissionalNome(consulta.idProfissional),
-                        ]),
-                        builder: (context, snapshot) {
-                          String pacienteNome = snapshot.data?[0] ?? 'Carregando...';
-                          String profissionalNome = snapshot.data?[1] ?? 'Carregando...';
+                      child: ListTile(
+                        title: FutureBuilder<List<String>>(
+                          future: Future.wait([
+                            _getPacienteNome(consulta.idPaciente),
+                            _getProfissionalNome(consulta.idProfissional),
+                          ]),
+                          builder: (context, snapshot) {
+                            String pacienteNome = snapshot.data?[0] ?? 'Carregando...';
+                            String profissionalNome = snapshot.data?[1] ?? 'Carregando...';
 
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            pacienteNome = 'Carregando...';
-                            profissionalNome = 'Carregando...';
-                          } else if (snapshot.hasError) {
-                            pacienteNome = 'Erro';
-                            profissionalNome = 'Erro';
-                          }
-
-                          return ListTile(
-                            title: Text('Paciente: $pacienteNome'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Profissional: $profissionalNome'),
-                                Text('Data/Hora: ${DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora)}'),
-                                if (consulta.motivo != null && consulta.motivo!.isNotEmpty)
-                                  Text('Motivo: ${consulta.motivo}'),
-                              ],
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              pacienteNome = 'Carregando...';
+                              profissionalNome = 'Carregando...';
+                            } else if (snapshot.hasError) {
+                              pacienteNome = 'Erro';
+                              profissionalNome = 'Erro';
+                            }
+                            return Text('Paciente: $pacienteNome\nProfissional: $profissionalNome');
+                          },
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Data/Hora: ${DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora)}'),
+                            if (consulta.motivo != null && consulta.motivo!.isNotEmpty)
+                              Text('Motivo: ${consulta.motivo}'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Botão de Lembrete
+                            IconButton(
+                              icon: const Icon(Icons.notifications, color: Colors.orange),
+                              onPressed: () => _sendReminder(consulta),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () async {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Funcionalidade de edição futura.')),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.payment, color: Colors.green),
-                                  onPressed: () async {
-                                    await Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => FinanceiroFormScreen(
-                                        idConsulta: consulta.idConsulta,
-                                      ),
-                                    ));
-                                    _loadConsultas();
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteConsulta(consulta.idConsulta!),
-                                ),
-                              ],
+                            // Botão de Editar/Reagendar (AGORA FUNCIONA PASSANDO A CONSULTA)
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () async {
+                                await Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => ConsultaFormScreen(
+                                    consulta: consulta, // PASSA A CONSULTA PARA EDIÇÃO/REAGENDAMENTO
+                                  ),
+                                ));
+                                _loadConsultas(); // Recarrega a lista após edição
+                              },
                             ),
-                          );
-                        },
+                            // Botão de Pagamento
+                            IconButton(
+                              icon: const Icon(Icons.payment, color: Colors.green),
+                              onPressed: () async {
+                                await Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => FinanceiroFormScreen(
+                                    idConsulta: consulta.idConsulta,
+                                  ),
+                                ));
+                                _loadConsultas();
+                              },
+                            ),
+                            // Botão de Excluir/Cancelar
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteConsulta(consulta.idConsulta!),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },

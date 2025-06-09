@@ -1,4 +1,4 @@
-// lib/models/paciente.dart
+// lib/domain/models/paciente.dart
 
 class Paciente {
   int? idPaciente; // AUTO_INCREMENT no SQL, então pode ser nulo na criação
@@ -9,6 +9,8 @@ class Paciente {
   String? email;
   String? endereco;
   String? convenio;
+  String? alergias;                     // NOVO: Adicionado aqui
+  String? condicoesPreExistentes;       // NOVO: Adicionado aqui
 
   Paciente({
     this.idPaciente,
@@ -19,6 +21,8 @@ class Paciente {
     this.email,
     this.endereco,
     this.convenio,
+    this.alergias,                     // NOVO: Adicionado ao construtor
+    this.condicoesPreExistentes,       // NOVO: Adicionado ao construtor
   });
 
   // Método para converter um Paciente em um Map (para inserção no banco)
@@ -32,6 +36,8 @@ class Paciente {
       'email': email,
       'endereco': endereco,
       'convenio': convenio,
+      'alergias': alergias,                     // NOVO: Adicionado ao toMap
+      'condicoesPreExistentes': condicoesPreExistentes, // NOVO: Adicionado ao toMap
     };
   }
 
@@ -48,11 +54,13 @@ class Paciente {
       email: map['email'] as String?,
       endereco: map['endereco'] as String?,
       convenio: map['convenio'] as String?,
+      alergias: map['alergias'] as String?,                     // NOVO: Adicionado ao fromMap
+      condicoesPreExistentes: map['condicoesPreExistentes'] as String?, // NOVO: Adicionado ao fromMap
     );
   }
 
   @override
   String toString() {
-    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio)';
+    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio, alergias: $alergias, condicoesPreExistentes: $condicoesPreExistentes)';
   }
 }

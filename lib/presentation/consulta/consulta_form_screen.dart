@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/domain/models/consulta.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
 import 'package:flutter_clinica_medica/domain/models/profissional.dart';
-import 'package:flutter_clinica_medica/domain/models/sala.dart'; // Para selecionar salas (futuramente)
+import 'package:flutter_clinica_medica/domain/models/sala.dart';
 import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
-import 'package:intl/intl.dart'; // Importe para formatação de data e hora
+import 'package:flutter_clinica_medica/domain/repositories/sala_repository.dart';
+import 'package:intl/intl.dart';
 
 class ConsultaFormScreen extends StatefulWidget {
-  final Consulta? consulta; // Adicionado para suportar edição (embora não implementado ainda na lista)
-  const ConsultaFormScreen({super.key, this.consulta}); // Adicionado construtor para edição
+  final Consulta? consulta;
+  const ConsultaFormScreen({super.key, this.consulta});
 
   static const String routeName = '/consulta-form';
 
@@ -22,33 +23,32 @@ class ConsultaFormScreen extends StatefulWidget {
 
 class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _dataHoraController = TextEditingController(); // Controller para a data e hora
+  final _dataHoraController = TextEditingController();
   final _motivoController = TextEditingController();
   final _diagnosticoController = TextEditingController();
 
   Paciente? _selectedPaciente;
   Profissional? _selectedProfissional;
+  Sala? _selectedSala;
 
   List<Paciente> _pacientes = [];
   List<Profissional> _profissionais = [];
+  List<Sala> _salas = [];
   bool _isLoadingDropdowns = true;
 
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
   final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
+  final SalaRepository _salaRepository = SalaRepository();
 
   @override
   void initState() {
     super.initState();
     _loadDropdownData();
-    // Preenche os campos se estiver em modo de edição
     if (widget.consulta != null) {
       _dataHoraController.text = DateFormat('dd/MM/yyyy HH:mm').format(widget.consulta!.dataHora);
       _motivoController.text = widget.consulta!.motivo ?? '';
       _diagnosticoController.text = widget.consulta!.diagnostico ?? '';
-      // Para edição, _selectedPaciente e _selectedProfissional precisariam ser pré-selecionados
-      // após o carregamento da lista de pacientes/profissionais em _loadDropdownData.
-      // Isso seria uma melhoria para uma iteração futura, focando no básico agora.
     }
   }
 
@@ -56,12 +56,14 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
     try {
       final pacientes = await _pacienteRepository.getAllPacientes();
       final profissionais = await _profissionalRepository.getAllProfissionais();
+      final salas = await _salaRepository.getAllSalas();
+
       setState(() {
         _pacientes = pacientes;
         _profissionais = profissionais;
+        _salas = salas;
         _isLoadingDropdowns = false;
 
-        // Lógica de pré-seleção para edição, se estiver no modo de edição
         if (widget.consulta != null) {
           _selectedPaciente = pacientes.firstWhere(
             (p) => p.idPaciente == widget.consulta!.idPaciente,
@@ -70,6 +72,10 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
           _selectedProfissional = profissionais.firstWhere(
             (pr) => pr.idProfissional == widget.consulta!.idProfissional,
             orElse: () => profissionais.isEmpty ? null as Profissional : profissionais.first,
+          );
+          _selectedSala = salas.firstWhere(
+            (s) => s.idSala == widget.consulta!.idSala,
+            orElse: () => salas.isEmpty ? null as Sala : salas.first,
           );
         }
       });
@@ -83,22 +89,21 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
     }
   }
 
-  // NOVO MÉTODO: Seletor de Data e Hora
   Future<void> _selectDataHora(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(), // Data inicial do calendário
-      firstDate: DateTime.now(),   // A partir de hoje
-      lastDate: DateTime(2101),    // Última data possível
-      locale: const Locale('pt', 'BR'), // Para calendário em português
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+      locale: const Locale('pt', 'BR'),
     );
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.now(), // Hora inicial do seletor
+        initialTime: TimeOfDay.now(),
         builder: (BuildContext context, Widget? child) {
           return MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), // Força formato 24h
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
             child: child!,
           );
         },
@@ -112,32 +117,67 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
             pickedTime.hour,
             pickedTime.minute,
           );
-          // Formata para DD/MM/YYYY HH:MM para exibição
           _dataHoraController.text = DateFormat('dd/MM/yyyy HH:mm').format(finalDateTime);
         });
       }
     }
   }
 
+  // Método para verificar conflitos de agendamento (RN02)
+  Future<bool> _hasConflict(DateTime dataHora, int profissionalId, int? salaId, int? currentConsultaId) async {
+    final allConsultas = await _consultaRepository.getAllConsultas();
+    for (var c in allConsultas) {
+      if (c.idConsulta != currentConsultaId &&
+          c.dataHora.year == dataHora.year &&
+          c.dataHora.month == dataHora.month &&
+          c.dataHora.day == dataHora.day &&
+          c.dataHora.hour == dataHora.hour &&
+          c.dataHora.minute == dataHora.minute) {
+
+        // Conflito de Profissional
+        if (c.idProfissional == profissionalId) { // CORRIGIDO: profissionalId
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Conflito: Profissional já tem outra consulta neste horário.'), backgroundColor: Colors.red),
+            );
+            return true;
+        }
+        // Conflito de Sala
+        if (c.idSala == salaId) {
+             ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Conflito: Sala já está ocupada neste horário.'), backgroundColor: Colors.red),
+            );
+            return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedPaciente == null || _selectedProfissional == null) {
+      if (_selectedPaciente == null || _selectedProfissional == null || _selectedSala == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione o Paciente e o Profissional.')),
+          const SnackBar(content: Text('Por favor, selecione o Paciente, Profissional e a Sala.')),
         );
         return;
       }
 
+      final parsedDataHora = DateFormat('dd/MM/yyyy HH:mm').parse(_dataHoraController.text);
+
+      final hasConflict = await _hasConflict(parsedDataHora, _selectedProfissional!.idProfissional!, _selectedSala!.idSala, widget.consulta?.idConsulta);
+      if (hasConflict) {
+        return;
+      }
+
       final consulta = Consulta(
-        idConsulta: widget.consulta?.idConsulta, // Mantém o ID para edição
-        // Converte de volta para DateTime usando o formato correto
-        dataHora: DateFormat('dd/MM/yyyy HH:mm').parse(_dataHoraController.text),
+        idConsulta: widget.consulta?.idConsulta,
+        dataHora: parsedDataHora,
         motivo: _motivoController.text.isNotEmpty ? _motivoController.text : null,
         diagnostico: _diagnosticoController.text.isNotEmpty ? _diagnosticoController.text : null,
         idPaciente: _selectedPaciente!.idPaciente,
         idProfissional: _selectedProfissional!.idProfissional,
-        idSala: null, // Temporariamente nulo
-        idReceita: null, // Temporariamente nulo
+        idSala: _selectedSala!.idSala,
+        idReceita: null,
       );
 
       try {
@@ -153,27 +193,28 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
           );
         }
         _clearForm();
-        Navigator.of(context).pop(); // Volta para a lista
+        Navigator.of(context).pop();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao agendar consulta: $e')),
+          SnackBar(content: Text('Erro ao agendar consulta: $e')), // Corrigida a sintaxe do SnackBar aqui
         );
       }
     }
   }
 
-  void _clearForm() {
+  void _clearForm() { // CORRIGIDO: Removido caracteres estranhos
     _dataHoraController.clear();
     _motivoController.clear();
     _diagnosticoController.clear();
     setState(() {
       _selectedPaciente = null;
       _selectedProfissional = null;
+      _selectedSala = null;
     });
   }
 
   @override
-  void dispose() {
+  void dispose() { // CORRIGIDO: Removido caracteres estranhos
     _dataHoraController.dispose();
     _motivoController.dispose();
     _diagnosticoController.dispose();
@@ -181,10 +222,10 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { // CORRIGIDO: Removido caracteres estranhos
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.consulta == null ? 'Agendar Consulta' : 'Editar Consulta'), // Título dinâmico
+        title: Text(widget.consulta == null ? 'Agendar Consulta' : 'Editar Consulta'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
@@ -244,6 +285,30 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
                     ),
                     const SizedBox(height: 10),
 
+                    // NOVO CAMPO: Seleção de Sala
+                    DropdownButtonFormField<Sala>(
+                      value: _selectedSala,
+                      decoration: const InputDecoration(labelText: 'Sala de Atendimento'),
+                      items: _salas.map((sala) {
+                        return DropdownMenuItem(
+                          value: sala,
+                          child: Text('${sala.nome ?? 'Sala S/N'} (Tipo: ${sala.tipo ?? 'N/A'})'),
+                        );
+                      }).toList(),
+                      onChanged: (Sala? newValue) {
+                        setState(() {
+                          _selectedSala = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Selecione a sala';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
                     // CAMPO DE DATA E HORA (COM PICKER E FORMATO BRASILEIRO)
                     TextFormField(
                       controller: _dataHoraController,
@@ -259,7 +324,6 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Por favor, insira a data e hora da consulta';
                         }
-                        // Opcional: Adicionar validação de formato se necessário
                         return null;
                       },
                     ),
