@@ -26,6 +26,8 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   // REMOVIDO: final _convenioController = TextEditingController(); // Removido, pois usaremos Dropdown
   final _alergiasController = TextEditingController(); // NOVO: Controller para Alergias
   final _condicoesPreExistentesController = TextEditingController(); // NOVO: Controller para Condições
+  // final _convenioController = TextEditingController(); // REMOVIDO: Usaremos Dropdown
+
 
   String? _selectedConvenio; // NOVO: Variável para o convênio selecionado no Dropdown
 
@@ -48,6 +50,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
       _selectedConvenio = widget.paciente!.convenio; // Define o convênio selecionado
       _alergiasController.text = widget.paciente!.alergias ?? ''; // Pré-preenche Alergias
       _condicoesPreExistentesController.text = widget.paciente!.condicoesPreExistentes ?? ''; // Pré-preenche Condições
+
     }
   }
 
@@ -83,6 +86,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
         convenio: _selectedConvenio, // Usar o valor do dropdown
         alergias: _alergiasController.text.isNotEmpty ? _alergiasController.text : null, // NOVO: Campo Alergias
         condicoesPreExistentes: _condicoesPreExistentesController.text.isNotEmpty ? _condicoesPreExistentesController.text : null, // NOVO: Campo Condições
+
       );
 
       try {
@@ -115,6 +119,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     _enderecoController.clear();
     _alergiasController.clear(); // Limpa Alergias
     _condicoesPreExistentesController.clear(); // Limpa Condições
+
     setState(() {
       _selectedConvenio = null; // Limpa a seleção do dropdown
     });
@@ -130,6 +135,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     _enderecoController.dispose();
     _alergiasController.dispose(); // Dispose Alergias
     _condicoesPreExistentesController.dispose(); // Dispose Condições
+
     super.dispose();
   }
 
@@ -233,6 +239,7 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
               const SizedBox(height: 10), // Espaçamento entre os campos
 
               // CAMPO: Alergias (NOVO) -- ESTE É O CAMPO QUE FALTAVA VISIVELMENTE
+              // CAMPO: Alergias (NOVO)
               TextFormField(
                 controller: _alergiasController,
                 decoration: const InputDecoration(labelText: 'Alergias'),
@@ -240,12 +247,14 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
               ),
               const SizedBox(height: 10),
               // CAMPO: Condições Pré-existentes (NOVO) -- ESTE É O CAMPO QUE FALTAVA VISIVELMENTE
+              // CAMPO: Condições Pré-existentes (NOVO)
               TextFormField(
                 controller: _condicoesPreExistentesController,
                 decoration: const InputDecoration(labelText: 'Condições Pré-existentes'),
                 maxLines: 3,
               ),
               const SizedBox(height: 20), // Espaçamento antes do botão
+              const SizedBox(height: 20),
 
               ElevatedButton(
                 onPressed: _submitForm,

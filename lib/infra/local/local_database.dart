@@ -32,17 +32,17 @@ class LocalDatabase {
     String path;
     if (kIsWeb) {
       // Para web, o path é virtual, o nome do banco de dados é suficiente
-      path = "controleendereco.db";
+      path = "clinica_medica.db";
     } else {
       /* A função getDatabasesPath() recupera o local padrão de instalação
-         da aplicação para o banco de dados. A função join, é utilizada para
+da aplicação para o banco de dados. A função join, é utilizada para
          concatenar o diretório do banco com o nome do arquivo do banco de dados. */
-      path = join(await getDatabasesPath(), "controleendereco.db");
+      path = join(await getDatabasesPath(), "clinica_medica.db");
     }
 
     /* Cria a conexão com o banco de dados */
     /* O atributo version define a versão atual do banco de dados
-       da aplicação. O atributo onCreate é responsável por gerenciar
+da aplicação. O atributo onCreate é responsável por gerenciar
        a criação das tabelas do banco de dados. */
     database = await openDatabase(
       path,

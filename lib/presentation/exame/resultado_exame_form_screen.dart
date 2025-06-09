@@ -8,6 +8,7 @@ import 'package:flutter_clinica_medica/domain/repositories/resultado_exame_repos
 import 'package:flutter_clinica_medica/domain/repositories/consulta_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/exame_repository.dart';
 import 'package:intl/intl.dart'; // Importe para formatação (Necessário para DateFormat)
+import 'package:intl/intl.dart'; // ADICIONE ESTA LINHA
 
 class ResultadoExameFormScreen extends StatefulWidget {
   final int? idConsulta; // Opcional, para vincular a uma consulta

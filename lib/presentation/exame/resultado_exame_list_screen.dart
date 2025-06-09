@@ -10,6 +10,7 @@ import 'package:flutter_clinica_medica/domain/repositories/exame_repository.dart
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart'; // Para navegar para o formulário
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart'; // Para abrir URLs (certifique-se de que 'url_launcher' está no pubspec.yaml)
+import 'package:url_launcher/url_launcher.dart'; // Para abrir URLs (adicione ao pubspec.yaml)
 
 class ResultadoExameListScreen extends StatefulWidget {
   const ResultadoExameListScreen({super.key});

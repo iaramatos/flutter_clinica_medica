@@ -1,16 +1,17 @@
 // lib/domain/models/paciente.dart
 
 class Paciente {
-  int? idPaciente; // AUTO_INCREMENT no SQL, então pode ser nulo na criação
+  int? idPaciente;
   String nome;
   String cpf;
-  DateTime? dataNascimento; // DATE no SQL
+  DateTime? dataNascimento;
   String? telefone;
   String? email;
   String? endereco;
   String? convenio;
   String? alergias;                     // NOVO: Adicionado aqui
   String? condicoesPreExistentes;       // NOVO: Adicionado aqui
+
 
   Paciente({
     this.idPaciente,
@@ -23,25 +24,25 @@ class Paciente {
     this.convenio,
     this.alergias,                     // NOVO: Adicionado ao construtor
     this.condicoesPreExistentes,       // NOVO: Adicionado ao construtor
+
   });
 
-  // Método para converter um Paciente em um Map (para inserção no banco)
   Map<String, dynamic> toMap() {
     return {
       'idPaciente': idPaciente,
       'nome': nome,
       'cpf': cpf,
-      'dataNascimento': dataNascimento?.toIso8601String(), // Converte DateTime para String para o banco
+      'dataNascimento': dataNascimento?.toIso8601String(),
       'telefone': telefone,
       'email': email,
       'endereco': endereco,
       'convenio': convenio,
       'alergias': alergias,                     // NOVO: Adicionado ao toMap
       'condicoesPreExistentes': condicoesPreExistentes, // NOVO: Adicionado ao toMap
+
     };
   }
 
-  // Método para criar um Paciente a partir de um Map (lido do banco)
   factory Paciente.fromMap(Map<String, dynamic> map) {
     return Paciente(
       idPaciente: map['idPaciente'] as int?,
@@ -62,5 +63,6 @@ class Paciente {
   @override
   String toString() {
     return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio, alergias: $alergias, condicoesPreExistentes: $condicoesPreExistentes)';
+    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf)';
   }
 }

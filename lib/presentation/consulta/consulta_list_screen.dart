@@ -171,6 +171,38 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                                 ));
                                 _loadConsultas(); // Recarrega a lista após edição
                               },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Botão de Lembrete (NOVO)
+                                IconButton(
+                                  icon: const Icon(Icons.notifications, color: Colors.orange),
+                                  onPressed: () => _sendReminder(consulta),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Funcionalidade de edição futura.')),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.payment, color: Colors.green),
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => FinanceiroFormScreen(
+                                        idConsulta: consulta.idConsulta,
+                                      ),
+                                    ));
+                                    _loadConsultas();
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteConsulta(consulta.idConsulta!),
+                                ),
+                              ],
                             ),
                             // Botão de Pagamento
                             IconButton(

@@ -75,6 +75,7 @@ class _ExameListScreenState extends State<ExameListScreen> {
             onPressed: () async {
               // Navegar para um formulário de cadastro de tipo de exame
               // Como não criamos um ExameFormScreen separado, usamos um AlertDialog simples para cadastro
+              // Como não criamos um ExameFormScreen, podemos fazer um AlertDialog simples para cadastro
               await _showAddExameDialog(context);
               _loadExames(); // Recarrega a lista após adicionar
             },
@@ -171,6 +172,7 @@ class _ExameListScreenState extends State<ExameListScreen> {
                       const SnackBar(content: Text('Tipo de exame salvo!')),
                     );
                     Navigator.of(dialogContext).pop(); // Fecha o AlertDialog
+                    Navigator.of(dialogContext).pop();
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Erro ao salvar tipo de exame: $e')),

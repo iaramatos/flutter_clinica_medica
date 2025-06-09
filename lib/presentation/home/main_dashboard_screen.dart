@@ -8,6 +8,7 @@ import 'package:flutter_clinica_medica/presentation/medicamento/medicamento_list
 import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
+<<<<<<< HEAD
 // NOVOS IMPORTS PARA OS MÓDULOS DE EXAMES E SALAS
 import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
@@ -15,6 +16,11 @@ import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_s
 import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart'; // NOVO IMPORT
 import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart'; // NOVO IMPORT (se precisar de acesso direto ao form de sala)
 
+=======
+import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart'; // NOVO IMPORT
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart'; // NOVO IMPORT
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart'; // NOVO IMPORT
+>>>>>>> a2a7592c03bf2b277681a4e93b2c323350037af7
 
 class MainDashboardScreen extends StatelessWidget {
   const MainDashboardScreen({super.key});
@@ -49,11 +55,14 @@ class MainDashboardScreen extends StatelessWidget {
             _buildDashboardButton(context, 'Tipos de Exames', ExameListScreen.routeName, Icons.science), // NOVO BOTÃO
             _buildDashboardButton(context, 'Registrar Resultado Exame', ResultadoExameFormScreen.routeName, Icons.assignment), // NOVO BOTÃO
             _buildDashboardButton(context, 'Ver Resultados Exames', ResultadoExameListScreen.routeName, Icons.file_copy), // NOVO BOTÃO
+<<<<<<< HEAD
 
             const Divider(height: 30),
             _buildSectionTitle(context, 'Módulos de Gestão'), // NOVA SEÇÃO
             _buildDashboardButton(context, 'Salas', SalaListScreen.routeName, Icons.meeting_room), // NOVO BOTÃO para Salas
             // _buildDashboardButton(context, 'Adicionar Sala', SalaFormScreen.routeName, Icons.add_box), // Opcional: Se quiser um botão direto para o form de sala
+=======
+>>>>>>> a2a7592c03bf2b277681a4e93b2c323350037af7
           ],
         ),
       ),
