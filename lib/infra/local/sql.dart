@@ -10,10 +10,10 @@ CREATE TABLE Paciente (
     telefone VARCHAR(15),
     email VARCHAR(100),
     endereco VARCHAR(255),
-    convenio VARCHAR(100), -- CORRIGIDO: Vírgula adicionada aqui
+    convenio VARCHAR(100), -- <<<< ESTA VÍRGULA É CRÍTICA >>>>
     alergias TEXT,
     condicoesPreExistentes TEXT
-    convenio VARCHAR(100),
+);
 
 -- Tabela de profissionais da saúde
 CREATE TABLE Profissional (
@@ -69,10 +69,8 @@ CREATE TABLE ResultadoExame (
     idResultado INTEGER PRIMARY KEY AUTOINCREMENT,
     idConsulta INT,
     idExame INT,
-    resultado TEXT,
-    urlDocumento TEXT, -- NOVO: Para um link/URL do documento (confirmado aqui)
     resultado TEXT, -- Descrição do resultado
-    urlDocumento TEXT, -- NOVO: Para um link/URL do documento
+    urlDocumento TEXT, -- NOVO: Para um link/URL do documento (certifique-se de que não está duplicado)
     FOREIGN KEY (idConsulta) REFERENCES Consulta(idConsulta) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idExame) REFERENCES Exame(idExame) ON DELETE NO ACTION ON UPDATE NO ACTION
 );

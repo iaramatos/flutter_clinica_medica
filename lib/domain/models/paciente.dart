@@ -63,6 +63,5 @@ class Paciente {
   @override
   String toString() {
     return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio, alergias: $alergias, condicoesPreExistentes: $condicoesPreExistentes)';
-    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf)';
   }
 }

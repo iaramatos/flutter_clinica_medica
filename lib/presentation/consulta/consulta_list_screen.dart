@@ -152,7 +152,7 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                               Text('Motivo: ${consulta.motivo}'),
                           ],
                         ),
-                        trailing: Row(
+                        trailing: Row( // <-- AQUI É ONDE ESTAVA O PROBLEMA
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Botão de Lembrete
@@ -160,49 +160,17 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                               icon: const Icon(Icons.notifications, color: Colors.orange),
                               onPressed: () => _sendReminder(consulta),
                             ),
-                            // Botão de Editar/Reagendar (AGORA FUNCIONA PASSANDO A CONSULTA)
+                            // Botão de Editar/Reagendar
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () async {
                                 await Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) => ConsultaFormScreen(
-                                    consulta: consulta, // PASSA A CONSULTA PARA EDIÇÃO/REAGENDAMENTO
+                                    consulta: consulta,
                                   ),
                                 ));
-                                _loadConsultas(); // Recarrega a lista após edição
+                                _loadConsultas();
                               },
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Botão de Lembrete (NOVO)
-                                IconButton(
-                                  icon: const Icon(Icons.notifications, color: Colors.orange),
-                                  onPressed: () => _sendReminder(consulta),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Funcionalidade de edição futura.')),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.payment, color: Colors.green),
-                                  onPressed: () async {
-                                    await Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => FinanceiroFormScreen(
-                                        idConsulta: consulta.idConsulta,
-                                      ),
-                                    ));
-                                    _loadConsultas();
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteConsulta(consulta.idConsulta!),
-                                ),
-                              ],
                             ),
                             // Botão de Pagamento
                             IconButton(

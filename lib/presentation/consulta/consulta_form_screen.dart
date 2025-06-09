@@ -13,7 +13,6 @@ import 'package:intl/intl.dart';
 
 class ConsultaFormScreen extends StatefulWidget {
   final Consulta? consulta;
-  final Consulta? consulta; // Adicionado para suportar edição
   const ConsultaFormScreen({super.key, this.consulta});
 
   static const String routeName = '/consulta-form';
@@ -90,7 +89,6 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
     }
   }
 
-  // Seletor de Data e Hora
   Future<void> _selectDataHora(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -125,21 +123,19 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
     }
   }
 
- {
-  // NOVO MÉTODO: Verificar conflitos de agendamento (RN02)
-  Future<bool> _hasConflict(DateTime dataHora, int profissionalId, int? currentConsultaId) async {
+  // Método para verificar conflitos de agendamento (RN02)
+  Future<bool> _hasConflict(DateTime dataHora, int profissionalId, int? salaId, int? currentConsultaId) async {
     final allConsultas = await _consultaRepository.getAllConsultas();
     for (var c in allConsultas) {
-      // Ignorar a própria consulta se estiver editando
       if (c.idConsulta != currentConsultaId &&
           c.dataHora.year == dataHora.year &&
           c.dataHora.month == dataHora.month &&
           c.dataHora.day == dataHora.day &&
           c.dataHora.hour == dataHora.hour &&
           c.dataHora.minute == dataHora.minute) {
-
+        
         // Conflito de Profissional
-        if (c.idProfissional == profissionalId) { // CORRIGIDO: profissionalId
+        if (c.idProfissional == profissionalId) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Conflito: Profissional já tem outra consulta neste horário.'), backgroundColor: Colors.red),
             );
@@ -155,12 +151,6 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
       }
     }
     return false;
-          c.dataHora.minute == dataHora.minute &&
-          c.idProfissional == profissionalId) {
-        return true; // Conflito encontrado
-      }
-    }
-    return false; // Sem conflito
   }
 
   Future<void> _submitForm() async {
@@ -177,13 +167,6 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
       final hasConflict = await _hasConflict(parsedDataHora, _selectedProfissional!.idProfissional!, _selectedSala!.idSala, widget.consulta?.idConsulta);
       if (hasConflict) {
         return;
-      // RN02: VERIFICAÇÃO DE CONFLITO
-      final hasConflict = await _hasConflict(parsedDataHora, _selectedProfissional!.idProfissional!, widget.consulta?.idConsulta);
-      if (hasConflict) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conflito de horário: o profissional já tem uma consulta agendada neste horário.')),
-        );
-        return; // Impede o salvamento
       }
 
       final consulta = Consulta(
@@ -213,13 +196,13 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
         Navigator.of(context).pop();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao agendar consulta: $e')), // Corrigida a sintaxe do SnackBar aqui
+          SnackBar(content: Text('Erro ao agendar consulta: $e')),
         );
       }
     }
   }
 
-  void _clearForm() { // CORRIGIDO: Removido caracteres estranhos
+  void _clearForm() {
     _dataHoraController.clear();
     _motivoController.clear();
     _diagnosticoController.clear();
@@ -231,7 +214,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
   }
 
   @override
-  void dispose() { // CORRIGIDO: Removido caracteres estranhos
+  void dispose() {
     _dataHoraController.dispose();
     _motivoController.dispose();
     _diagnosticoController.dispose();
@@ -239,7 +222,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
   }
 
   @override
-  Widget build(BuildContext context) { // CORRIGIDO: Removido caracteres estranhos
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.consulta == null ? 'Agendar Consulta' : 'Editar Consulta'),

@@ -14,22 +14,15 @@ import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_scre
 import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
-<<<<<<< HEAD
-import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart'; // NOVO IMPORT: Form de Sala
-import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart'; // NOVO IMPORT: Lista de Sala
-import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart'; // NOVO IMPORT: Lista de Tipos de Exame
-import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart'; // NOVO IMPORT: Form de Resultado de Exame
-import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart'; // NOVO IMPORT: Lista de Resultados de Exame
-=======
+import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
 
->>>>>>> a2a7592c03bf2b277681a4e93b2c323350037af7
-
 // IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/intl.dart'; // Mantenha este import, pois ele já é usado para formatação de data
+import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -190,11 +183,6 @@ class ClinicaMedicaApp extends StatelessWidget {
 
         // Rota do Dashboard Principal
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
-
-        // NOVAS ROTAS PARA EXAMES E RESULTADOS (ITERAÇÃO 5)
-        ExameListScreen.routeName: (context) => const ExameListScreen(),
-        ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
-        ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
       },
     );
   }
