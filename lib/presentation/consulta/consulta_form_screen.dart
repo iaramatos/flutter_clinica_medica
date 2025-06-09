@@ -135,7 +135,7 @@ class _ConsultaFormScreenState extends State<ConsultaFormScreen> {
           c.dataHora.minute == dataHora.minute) {
         
         // Conflito de Profissional
-        if (c.idProfissional == profissionalId) {
+        if (c.idProfissional == profissionalId) { // CORRIGIDO: profissionalId
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Conflito: Profissional já tem outra consulta neste horário.'), backgroundColor: Colors.red),
             );
