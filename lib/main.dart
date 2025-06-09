@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/infra/local/local_database.dart';
-import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
 import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/paciente/paciente_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/profissional/profissional_form_screen.dart';
@@ -21,13 +20,16 @@ import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
 
-// NOVOS IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
+// IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
 import 'package:flutter_clinica_medica/presentation/contas/conta_receber_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
 
+// NOVOS IMPORTS PARA AUTENTICAÇÃO (ITERAÇÃO 8)
+import 'package:flutter_clinica_medica/presentation/auth/login_screen.dart';
+import 'package:flutter_clinica_medica/presentation/auth/register_screen.dart';
 
 // IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -41,92 +43,34 @@ void main() async {
 
   print('Banco de dados da clínica aberto com sucesso!');
 
-  // --- CÓDIGO TEMPORÁRIO PARA TESTE DE INSERÇÃO (REMOVER DEPOIS DA IT4/Release 1) ---
-  // Mantenha os de paciente e profissional se ainda não tiver dados de teste
-  // Remova-os ou comente-os após ter dados suficientes para testar
+  // --- CÓDIGO TEMPORÁRIO PARA TESTE DE INSERÇÃO (REMOVER DEPOIS!) ---
+  // Este bloco é para inserir um usuário admin automaticamente na primeira vez que o DB for criado.
+  // REMOVA OU COMENTE ESTE BLOCO APÓS TESTAR E TER SEU USUÁRIO ADMIN CADASTRADO.
   /*
-  import 'package:flutter_clinica_medica/domain/models/paciente.dart';
-  import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
-  import 'package:flutter_clinica_medica/domain/models/profissional.dart';
-  import 'package:flutter_clinica_medica/domain/repositories/profissional_repository.dart';
-  import 'package:flutter_clinica_medica/domain/models/sala.dart';
-  import 'package:flutter_clinica_medica/domain/repositories/sala_repository.dart';
-  import 'package:flutter_clinica_medica/domain/models/exame.dart';
-  import 'package:flutter_clinica_medica/domain/repositories/exame_repository.dart';
+  import 'package:flutter_clinica_medica/domain/models/usuario.dart';
+  import 'package:flutter_clinica_medica/domain/repositories/usuario_repository.dart';
+  import 'package:flutter_clinica_medica/utils/password_util.dart';
 
-
-  final pacienteRepo = PacienteRepository();
-  final profissionalRepo = ProfissionalRepository();
-  final salaRepo = SalaRepository();
-  final exameRepo = ExameRepository();
-
+  final usuarioRepo = UsuarioRepository();
   try {
-    // Inserir Paciente de Teste
-    final existingPaciente = await pacienteRepo.getPacienteById(1);
-    if (existingPaciente == null) {
-      final testPaciente = Paciente(
-        nome: 'Paciente Teste Maria Silva',
-        cpf: '111.111.111-11',
-        dataNascimento: DateTime(1990, 5, 15),
-        telefone: '999999999',
-        email: 'maria.silva@email.com',
-        endereco: 'Rua A, 123',
-        convenio: 'Particular',
-        alergias: 'Nenhuma',
-        condicoesPreExistentes: 'Asma'
+    final existingAdmin = await usuarioRepo.getUsuarioByUsername('admin');
+    if (existingAdmin == null) {
+      final salt = PasswordUtil.generateSalt();
+      final hashedPassword = PasswordUtil.hashPassword('admin123', salt); // Senha padrão para o admin
+      final adminUser = Usuario(
+        username: 'admin',
+        passwordHash: hashedPassword,
+        salt: salt,
+        email: 'admin@clinica.com',
+        tipo: 'admin',
       );
-      await pacienteRepo.insertPaciente(testPaciente);
-      print('Paciente de teste inserido com sucesso!');
+      await usuarioRepo.insertUsuario(adminUser);
+      print('Usuário admin de teste criado!');
     } else {
-      print('Paciente de teste já existe.');
+      print('Usuário admin de teste já existe.');
     }
-
-    // Inserir Profissional de Teste
-    final existingProfissional = await profissionalRepo.getProfissionalById(1);
-    if (existingProfissional == null) {
-      final testProfissional = Profissional(
-        nome: 'Profissional Teste Dr. João',
-        especialidade: 'Clínico Geral',
-        registro: 'CRM/XX 12345',
-        email: 'joao@clinica.com',
-        telefone: '987654321',
-        tipoUsuario: 'medico',
-      );
-      await profissionalRepo.insertProfissional(testProfissional);
-      print('Profissional de teste inserido com sucesso!');
-    } else {
-      print('Profissional de teste já existe.');
-    }
-
-    // Inserir Sala de Teste
-    final existingSala = await salaRepo.getSalaById(1);
-    if (existingSala == null) {
-      final testSala = Sala(
-        nome: 'Consultório 1',
-        tipo: 'Consultório',
-        capacidade: 1
-      );
-      await salaRepo.insertSala(testSala);
-      print('Sala de teste inserida com sucesso!');
-    } else {
-      print('Sala de teste já existe.');
-    }
-
-    // Inserir Exame de Teste
-    final existingExame = await exameRepo.getExameById(1);
-    if (existingExame == null) {
-      final testExame = Exame(
-        nome: 'Hemograma Completo',
-        descricao: 'Exame de sangue para contagem de células.'
-      );
-      await exameRepo.insertExame(testExame);
-      print('Exame de teste inserido com sucesso!');
-    } else {
-      print('Exame de teste já existe.');
-    }
-
   } catch (e) {
-    print('Erro durante inserção de dados de teste: $e');
+    print('Erro durante inserção de usuário admin de teste: $e');
   }
   */
   // --- FIM DO CÓDIGO TEMPORÁRIO ---
@@ -157,9 +101,13 @@ class ClinicaMedicaApp extends StatelessWidget {
         Locale('en', ''), // Inglês
         Locale('pt', 'BR'), // Português do Brasil
       ],
-      // Rota inicial do aplicativo (Dashboard)
-      initialRoute: MainDashboardScreen.routeName,
+      // Rota inicial do aplicativo (AGORA INICIA NA TELA DE LOGIN)
+      initialRoute: LoginScreen.routeName, // AQUI ESTÁ A MUDANÇA PRINCIPAL
       routes: {
+        // Rotas de Autenticação (NOVAS)
+        LoginScreen.routeName: (context) => const LoginScreen(),
+        RegisterScreen.routeName: (context) => const RegisterScreen(),
+
         // Rotas de Paciente
         PacienteListScreen.routeName: (context) => const PacienteListScreen(),
         PacienteFormScreen.routeName: (context) => const PacienteFormScreen(),
@@ -195,7 +143,7 @@ class ClinicaMedicaApp extends StatelessWidget {
         ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
         ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
 
-        // Rota do Dashboard Principal
+        // Rota do Dashboard Principal (acessado após login)
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
       },
     );
