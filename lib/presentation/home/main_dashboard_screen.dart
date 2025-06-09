@@ -14,6 +14,11 @@ import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_s
 import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart'; // Opcional: Se precisar de acesso direto ao form de sala
 
+// NOVOS IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
+import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
+
 
 class MainDashboardScreen extends StatelessWidget {
   const MainDashboardScreen({super.key});
@@ -53,6 +58,12 @@ class MainDashboardScreen extends StatelessWidget {
             _buildSectionTitle(context, 'Módulos de Gestão'),
             _buildDashboardButton(context, 'Salas', SalaListScreen.routeName, Icons.meeting_room),
             // _buildDashboardButton(context, 'Adicionar Sala', SalaFormScreen.routeName, Icons.add_box),
+
+            const Divider(height: 30), // NOVA LINHA
+            _buildSectionTitle(context, 'Módulos Financeiros Detalhados'), // NOVA SEÇÃO
+            _buildDashboardButton(context, 'Contas a Receber', ContaReceberListScreen.routeName, Icons.attach_money), // NOVO BOTÃO
+            _buildDashboardButton(context, 'Contas a Pagar', ContaPagarListScreen.routeName, Icons.money_off), // NOVO BOTÃO
+            _buildDashboardButton(context, 'Relatório Financeiro', RelatorioFinanceiroScreen.routeName, Icons.bar_chart), // NOVO BOTÃO
           ],
         ),
       ),

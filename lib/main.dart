@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/infra/local/local_database.dart';
+import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
 import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/paciente/paciente_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/profissional/profissional_form_screen.dart';
@@ -19,6 +20,14 @@ import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
 import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
+
+// NOVOS IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
+import 'package:flutter_clinica_medica/presentation/contas/conta_receber_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
+
 
 // IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -171,10 +180,15 @@ class ClinicaMedicaApp extends StatelessWidget {
 
         // Rotas Financeiras
         FinanceiroFormScreen.routeName: (context) => const FinanceiroFormScreen(),
+        ContaReceberListScreen.routeName: (context) => const ContaReceberListScreen(),
+        ContaReceberFormScreen.routeName: (context) => const ContaReceberFormScreen(),
+        ContaPagarListScreen.routeName: (context) => const ContaPagarListScreen(),
+        ContaPagarFormScreen.routeName: (context) => const ContaPagarFormScreen(),
+        RelatorioFinanceiroScreen.routeName: (context) => const RelatorioFinanceiroScreen(),
 
         // Rotas de Salas
         SalaListScreen.routeName: (context) => const SalaListScreen(),
-        SalaFormScreen.routeName: (context) => const SalaFormScreen(), // Opcional, se precisar de rota direta
+        SalaFormScreen.routeName: (context) => const SalaFormScreen(),
 
         // Rotas de Exames e Resultados de Exames
         ExameListScreen.routeName: (context) => const ExameListScreen(),

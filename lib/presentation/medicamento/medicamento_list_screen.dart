@@ -18,6 +18,7 @@ class _MedicamentoListScreenState extends State<MedicamentoListScreen> {
   final MedicamentoRepository _medicamentoRepository = MedicamentoRepository();
   List<Medicamento> _medicamentos = [];
   bool _isLoading = true;
+  final int _estoqueMinimoAlerta = 10; // Definir um limite para alerta de baixa
 
   @override
   void initState() {
@@ -59,6 +60,27 @@ class _MedicamentoListScreenState extends State<MedicamentoListScreen> {
     }
   }
 
+  // NOVO: Método para simular alerta de baixa ou reposição
+  void _triggerLowStockAlert(Medicamento medicamento) {
+    if (medicamento.estoqueAtual != null && medicamento.estoqueAtual! < _estoqueMinimoAlerta) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ALERTA DE ESTOQUE BAIXO: ${medicamento.nome} tem apenas ${medicamento.estoqueAtual} unidades. Sugerir reposição.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${medicamento.nome} tem estoque suficiente (${medicamento.estoqueAtual ?? 'N/A'}).'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,14 +110,30 @@ class _MedicamentoListScreenState extends State<MedicamentoListScreen> {
                   itemCount: _medicamentos.length,
                   itemBuilder: (context, index) {
                     final medicamento = _medicamentos[index];
+                    // Determinar a cor do texto do estoque
+                    Color estoqueColor = Colors.black;
+                    if (medicamento.estoqueAtual != null && medicamento.estoqueAtual! < _estoqueMinimoAlerta) {
+                      estoqueColor = Colors.red; // Estoque baixo
+                    } else if (medicamento.estoqueAtual != null && medicamento.estoqueAtual! > _estoqueMinimoAlerta * 2) {
+                      estoqueColor = Colors.blue; // Estoque alto
+                    }
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: ListTile(
                         title: Text(medicamento.nome),
-                        subtitle: Text('Estoque: ${medicamento.estoqueAtual ?? 'N/A'}'),
+                        subtitle: Text(
+                          'Estoque: ${medicamento.estoqueAtual ?? 'N/A'}',
+                          style: TextStyle(color: estoqueColor, fontWeight: FontWeight.bold),
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // NOVO: Botão de Alerta/Reposição
+                            IconButton(
+                              icon: const Icon(Icons.warning_amber, color: Colors.orange),
+                              onPressed: () => _triggerLowStockAlert(medicamento),
+                            ),
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () async {
