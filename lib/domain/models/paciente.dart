@@ -2,6 +2,7 @@
 
 class Paciente {
   int? idPaciente;
+  int? idUsuario; // NOVO: Chave estrangeira para Usuario
   String nome;
   String cpf;
   DateTime? dataNascimento;
@@ -9,12 +10,12 @@ class Paciente {
   String? email;
   String? endereco;
   String? convenio;
-  String? alergias;                     // NOVO: Adicionado aqui
-  String? condicoesPreExistentes;       // NOVO: Adicionado aqui
-
+  String? alergias;
+  String? condicoesPreExistentes;
 
   Paciente({
     this.idPaciente,
+    this.idUsuario, // NOVO: Adicionado ao construtor
     required this.nome,
     required this.cpf,
     this.dataNascimento,
@@ -22,14 +23,14 @@ class Paciente {
     this.email,
     this.endereco,
     this.convenio,
-    this.alergias,                     // NOVO: Adicionado ao construtor
-    this.condicoesPreExistentes,       // NOVO: Adicionado ao construtor
-
+    this.alergias,
+    this.condicoesPreExistentes,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'idPaciente': idPaciente,
+      'idUsuario': idUsuario, // NOVO: Adicionado ao toMap
       'nome': nome,
       'cpf': cpf,
       'dataNascimento': dataNascimento?.toIso8601String(),
@@ -37,15 +38,15 @@ class Paciente {
       'email': email,
       'endereco': endereco,
       'convenio': convenio,
-      'alergias': alergias,                     // NOVO: Adicionado ao toMap
-      'condicoesPreExistentes': condicoesPreExistentes, // NOVO: Adicionado ao toMap
-
+      'alergias': alergias,
+      'condicoesPreExistentes': condicoesPreExistentes,
     };
   }
 
   factory Paciente.fromMap(Map<String, dynamic> map) {
     return Paciente(
       idPaciente: map['idPaciente'] as int?,
+      idUsuario: map['idUsuario'] as int?, // NOVO: Adicionado ao fromMap
       nome: map['nome'] as String,
       cpf: map['cpf'] as String,
       dataNascimento: map['dataNascimento'] != null
@@ -55,13 +56,13 @@ class Paciente {
       email: map['email'] as String?,
       endereco: map['endereco'] as String?,
       convenio: map['convenio'] as String?,
-      alergias: map['alergias'] as String?,                     // NOVO: Adicionado ao fromMap
-      condicoesPreExistentes: map['condicoesPreExistentes'] as String?, // NOVO: Adicionado ao fromMap
+      alergias: map['alergias'] as String?,
+      condicoesPreExistentes: map['condicoesPreExistentes'] as String?,
     );
   }
 
   @override
   String toString() {
-    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, dataNascimento: $dataNascimento, telefone: $telefone, email: $email, endereco: $endereco, convenio: $convenio, alergias: $alergias, condicoesPreExistentes: $condicoesPreExistentes)';
+    return 'Paciente(idPaciente: $idPaciente, nome: $nome, cpf: $cpf, idUsuario: $idUsuario)';
   }
 }

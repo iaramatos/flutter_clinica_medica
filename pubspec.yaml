@@ -17,6 +17,8 @@ dependencies:
   flutter_localizations: # ADICIONE ESTA LINHA
     sdk: flutter         # E ESTA LINHA
   url_launcher: ^6.1.0 # Certifique-se desta linha e da indentação
+  crypto: ^3.0.3 # Verifique a versão mais recente
+  pointycastle: ^3.7.3 # Verifique a versão mais recente
 
 
 dev_dependencies:

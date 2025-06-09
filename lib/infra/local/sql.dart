@@ -1,29 +1,43 @@
 // lib/infra/local/sql.dart
 
 const String sqlCreateTable = '''
--- Tabela de pacientes
+-- Tabela de usuários para autenticação
+CREATE TABLE Usuario (
+    idUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    passwordHash TEXT NOT NULL, -- Senha com hash (nunca armazene senhas em texto puro!)
+    salt TEXT NOT NULL,         -- Salt para o hash da senha
+    email VARCHAR(100) UNIQUE,
+    tipo TEXT NOT NULL          -- 'admin', 'medico', 'enfermeiro', 'recepcionista', 'paciente'
+);
+
+-- Tabela de pacientes (ADICIONAR CHAVE ESTRANGEIRA idUsuario)
 CREATE TABLE Paciente (
     idPaciente INTEGER PRIMARY KEY AUTOINCREMENT,
+    idUsuario INT, -- NOVO: Chave estrangeira para Usuario
     nome VARCHAR(100) NOT NULL,
     cpf VARCHAR(14) UNIQUE NOT NULL,
     dataNascimento TEXT,
     telefone VARCHAR(15),
     email VARCHAR(100),
     endereco VARCHAR(255),
-    convenio VARCHAR(100), -- <<<< ESTA VÍRGULA É CRÍTICA >>>>
+    convenio VARCHAR(100),
     alergias TEXT,
-    condicoesPreExistentes TEXT
+    condicoesPreExistentes TEXT,
+    FOREIGN KEY (idUsuario) REFERENCES Usuario(idUsuario) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Tabela de profissionais da saúde
+-- Tabela de profissionais da saúde (ADICIONAR CHAVE ESTRANGEIRA idUsuario)
 CREATE TABLE Profissional (
     idProfissional INTEGER PRIMARY KEY AUTOINCREMENT,
+    idUsuario INT, -- NOVO: Chave estrangeira para Usuario
     nome VARCHAR(100) NOT NULL,
     especialidade VARCHAR(100),
     registro VARCHAR(50),
     email VARCHAR(100),
     telefone VARCHAR(15),
-    tipoUsuario TEXT NOT NULL
+    tipoUsuario TEXT NOT NULL, -- Manter para tipos de profissional específicos
+    FOREIGN KEY (idUsuario) REFERENCES Usuario(idUsuario) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Tabela de salas (consultórios, laboratórios, etc.)
@@ -69,8 +83,8 @@ CREATE TABLE ResultadoExame (
     idResultado INTEGER PRIMARY KEY AUTOINCREMENT,
     idConsulta INT,
     idExame INT,
-    resultado TEXT, -- Descrição do resultado
-    urlDocumento TEXT, -- NOVO: Para um link/URL do documento (certifique-se de que não está duplicado)
+    resultado TEXT,
+    urlDocumento TEXT,
     FOREIGN KEY (idConsulta) REFERENCES Consulta(idConsulta) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (idExame) REFERENCES Exame(idExame) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
