@@ -1,10 +1,12 @@
 // lib/presentation/paciente/paciente_form_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_clinica_medica/domain/models/medicamento.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
-import 'package:flutter_clinica_medica/domain/models/usuario.dart'; // NOVO IMPORT
+import 'package:flutter_clinica_medica/domain/models/usuario.dart';
+import 'package:flutter_clinica_medica/domain/repositories/medicamento_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
-import 'package:flutter_clinica_medica/domain/repositories/usuario_repository.dart'; // NOVO IMPORT
+import 'package:flutter_clinica_medica/domain/repositories/usuario_repository.dart';
 import 'package:intl/intl.dart';
 
 class PacienteFormScreen extends StatefulWidget {
@@ -25,59 +27,140 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   final _telefoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _enderecoController = TextEditingController();
-  final _alergiasController = TextEditingController();
   final _condicoesPreExistentesController = TextEditingController();
 
   String? _selectedConvenio;
-  Usuario? _selectedUsuario; // NOVO: Campo para o usuário selecionado
-  List<Usuario> _usuarios = []; // NOVO: Lista de usuários
-  bool _isLoadingUsuarios = true; // NOVO: Para controlar o carregamento de usuários
+  Usuario? _selectedUsuario;
+  List<Usuario> _usuarios = [];
+  bool _isLoading = true;
+
+  // Estados para o seletor de alergias
+  final MedicamentoRepository _medicamentoRepository = MedicamentoRepository();
+  List<Medicamento> _allMedicamentos = [];
+  List<Medicamento> _selectedAlergias = [];
 
   final PacienteRepository _pacienteRepository = PacienteRepository();
-  final UsuarioRepository _usuarioRepository = UsuarioRepository(); // NOVO: Repositório de usuário
+  final UsuarioRepository _usuarioRepository = UsuarioRepository();
 
   @override
   void initState() {
     super.initState();
-    _loadUsuarios(); // Carrega usuários no início
-    if (widget.paciente != null) {
-      _nomeController.text = widget.paciente!.nome;
-      _cpfController.text = widget.paciente!.cpf;
-      if (widget.paciente!.dataNascimento != null) {
-        _dataNascimentoController.text = DateFormat('dd-MM-yyyy').format(widget.paciente!.dataNascimento!);
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await Future.wait([
+        _usuarioRepository.getAllUsuarios(),
+        _medicamentoRepository.getAllMedicamentos(),
+      ]);
+      _usuarios = results[0] as List<Usuario>;
+      _allMedicamentos = results[1] as List<Medicamento>;
+
+      if (widget.paciente != null) {
+        _fillFormWithPacienteData();
       }
-      _telefoneController.text = widget.paciente!.telefone ?? '';
-      _emailController.text = widget.paciente!.email ?? '';
-      _enderecoController.text = widget.paciente!.endereco ?? '';
-      _selectedConvenio = widget.paciente!.convenio;
-      _alergiasController.text = widget.paciente!.alergias ?? '';
-      _condicoesPreExistentesController.text = widget.paciente!.condicoesPreExistentes ?? '';
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar dados iniciais: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  // NOVO MÉTODO: Carrega usuários para o dropdown
-  Future<void> _loadUsuarios() async {
-    try {
-      final usuarios = await _usuarioRepository.getAllUsuarios();
-      setState(() {
-        _usuarios = usuarios;
-        _isLoadingUsuarios = false;
-        // Se estiver editando, pré-seleciona o usuário associado
-        if (widget.paciente != null && widget.paciente!.idUsuario != null) {
-          _selectedUsuario = usuarios.firstWhere(
-            (u) => u.idUsuario == widget.paciente!.idUsuario,
-            orElse: () => usuarios.isEmpty ? null as Usuario : usuarios.first,
-          );
-        }
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao carregar usuários: $e')),
-      );
-      setState(() {
-        _isLoadingUsuarios = false;
-      });
+  void _fillFormWithPacienteData() {
+    final paciente = widget.paciente!;
+    _nomeController.text = paciente.nome;
+    _cpfController.text = paciente.cpf;
+    if (paciente.dataNascimento != null) {
+      _dataNascimentoController.text =
+          DateFormat('dd-MM-yyyy').format(paciente.dataNascimento!);
     }
+    _telefoneController.text = paciente.telefone ?? '';
+    _emailController.text = paciente.email ?? '';
+    _enderecoController.text = paciente.endereco ?? '';
+    _selectedConvenio = paciente.convenio;
+    _condicoesPreExistentesController.text =
+        paciente.condicoesPreExistentes ?? '';
+
+    if (paciente.idUsuario != null) {
+      // Correção: usa 'try-first' para evitar erro se o usuário não for encontrado.
+      _selectedUsuario =
+          _usuarios.where((u) => u.idUsuario == paciente.idUsuario).firstOrNull;
+    }
+
+    if (paciente.alergias != null && paciente.alergias!.isNotEmpty) {
+      final alergiasNomes = paciente.alergias!
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .toSet();
+      _selectedAlergias = _allMedicamentos
+          .where((med) => alergiasNomes.contains(med.nome.toLowerCase()))
+          .toList();
+    }
+  }
+
+  Future<void> _showMultiSelectAlergias() async {
+    final List<Medicamento> tempSelectedAlergias = List.from(_selectedAlergias);
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Selecione as Alergias'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return ListView.builder(
+                  itemCount: _allMedicamentos.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final medicamento = _allMedicamentos[index];
+                    final bool isSelected = tempSelectedAlergias.any((item) =>
+                        item.idMedicamento == medicamento.idMedicamento);
+                    return CheckboxListTile(
+                      title: Text(medicamento.nome),
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            tempSelectedAlergias.add(medicamento);
+                          } else {
+                            tempSelectedAlergias.removeWhere((item) =>
+                                item.idMedicamento ==
+                                medicamento.idMedicamento);
+                          }
+                        });
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Confirmar'),
+              onPressed: () {
+                setState(() {
+                  _selectedAlergias = tempSelectedAlergias;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _selectDataNascimento(BuildContext context) async {
@@ -90,63 +173,76 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     );
     if (picked != null) {
       setState(() {
-        _dataNascimentoController.text = DateFormat('dd-MM-yyyy').format(picked);
+        _dataNascimentoController.text =
+            DateFormat('dd-MM-yyyy').format(picked);
       });
     }
   }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      final String alergiasText =
+          _selectedAlergias.map((m) => m.nome).join(', ');
+
+      DateTime? dataNascimento;
+      try {
+        if (_dataNascimentoController.text.isNotEmpty) {
+          dataNascimento =
+              DateFormat('dd-MM-yyyy').parse(_dataNascimentoController.text);
+        }
+      } catch (e) {
+        // Lida com data inválida, embora o DatePicker minimize isso.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Formato de data inválido. Use DD-MM-YYYY.')),
+        );
+        return;
+      }
+
       final paciente = Paciente(
         idPaciente: widget.paciente?.idPaciente,
-        idUsuario: _selectedUsuario?.idUsuario, // NOVO: Atribui o ID do Usuário
+        idUsuario: _selectedUsuario?.idUsuario,
         nome: _nomeController.text,
         cpf: _cpfController.text,
-        dataNascimento: _dataNascimentoController.text.isNotEmpty
-            ? DateFormat('dd-MM-yyyy').parse(_dataNascimentoController.text)
+        dataNascimento: dataNascimento,
+        telefone: _telefoneController.text.isNotEmpty
+            ? _telefoneController.text
             : null,
-        telefone: _telefoneController.text.isNotEmpty ? _telefoneController.text : null,
         email: _emailController.text.isNotEmpty ? _emailController.text : null,
-        endereco: _enderecoController.text.isNotEmpty ? _enderecoController.text : null,
+        endereco: _enderecoController.text.isNotEmpty
+            ? _enderecoController.text
+            : null,
         convenio: _selectedConvenio,
-        alergias: _alergiasController.text.isNotEmpty ? _alergiasController.text : null,
-        condicoesPreExistentes: _condicoesPreExistentesController.text.isNotEmpty ? _condicoesPreExistentesController.text : null,
+        alergias: alergiasText.isNotEmpty ? alergiasText : null,
+        condicoesPreExistentes:
+            _condicoesPreExistentesController.text.isNotEmpty
+                ? _condicoesPreExistentesController.text
+                : null,
       );
 
       try {
         if (paciente.idPaciente == null) {
           await _pacienteRepository.insertPaciente(paciente);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Paciente salvo com sucesso!')),
-          );
         } else {
           await _pacienteRepository.updatePaciente(paciente);
+        }
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Paciente atualizado com sucesso!')),
+            SnackBar(
+                content: Text(
+                    'Paciente ${paciente.idPaciente == null ? "salvo" : "atualizado"} com sucesso!')),
+          );
+          // Retorna 'true' para a tela anterior saber que precisa recarregar a lista
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar paciente: $e')),
           );
         }
-        Navigator.of(context).pop();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar paciente: $e')),
-        );
       }
     }
-  }
-
-  void _clearForm() {
-    _nomeController.clear();
-    _cpfController.clear();
-    _dataNascimentoController.clear();
-    _telefoneController.clear();
-    _emailController.clear();
-    _enderecoController.clear();
-    _alergiasController.clear();
-    _condicoesPreExistentesController.clear();
-    setState(() {
-      _selectedConvenio = null;
-      _selectedUsuario = null; // NOVO: Limpa o usuário selecionado
-    });
   }
 
   @override
@@ -157,7 +253,6 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
     _telefoneController.dispose();
     _emailController.dispose();
     _enderecoController.dispose();
-    _alergiasController.dispose();
     _condicoesPreExistentesController.dispose();
     super.dispose();
   }
@@ -166,11 +261,13 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.paciente == null ? 'Cadastro de Paciente' : 'Editar Paciente'),
+        title: Text(widget.paciente == null
+            ? 'Cadastro de Paciente'
+            : 'Editar Paciente'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
-      body: _isLoadingUsuarios // NOVO: Condicional para carregar usuários
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
@@ -178,10 +275,10 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                 key: _formKey,
                 child: ListView(
                   children: [
-                    // NOVO CAMPO: Seleção de Usuário
                     DropdownButtonFormField<Usuario>(
                       value: _selectedUsuario,
-                      decoration: const InputDecoration(labelText: 'Vincular à Conta de Usuário (Opcional)'),
+                      decoration: const InputDecoration(
+                          labelText: 'Vincular à Conta de Usuário (Opcional)'),
                       items: _usuarios.map((usuario) {
                         return DropdownMenuItem(
                           value: usuario,
@@ -189,34 +286,25 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                         );
                       }).toList(),
                       onChanged: (Usuario? newValue) {
-                        setState(() {
-                          _selectedUsuario = newValue;
-                        });
+                        setState(() => _selectedUsuario = newValue);
                       },
-                      // Não obrigatório, por isso sem validator aqui
                     ),
                     const SizedBox(height: 10),
-
                     TextFormField(
                       controller: _nomeController,
-                      decoration: const InputDecoration(labelText: 'Nome Completo'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira o nome do paciente';
-                        }
-                        return null;
-                      },
+                      decoration:
+                          const InputDecoration(labelText: 'Nome Completo'),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Por favor, insira o nome do paciente'
+                          : null,
                     ),
                     TextFormField(
                       controller: _cpfController,
                       decoration: const InputDecoration(labelText: 'CPF'),
                       keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira o CPF';
-                        }
-                        return null;
-                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Por favor, insira o CPF'
+                          : null,
                     ),
                     TextFormField(
                       controller: _dataNascimentoController,
@@ -228,12 +316,6 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                         ),
                       ),
                       readOnly: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a data de nascimento';
-                        }
-                        return null;
-                      },
                     ),
                     TextFormField(
                       controller: _telefoneController,
@@ -247,41 +329,70 @@ class _PacienteFormScreenState extends State<PacienteFormScreen> {
                     ),
                     TextFormField(
                       controller: _enderecoController,
-                      decoration: const InputDecoration(labelText: 'Endereço Completo'),
+                      decoration:
+                          const InputDecoration(labelText: 'Endereço Completo'),
                       maxLines: 2,
                     ),
                     DropdownButtonFormField<String>(
                       value: _selectedConvenio,
-                      decoration: const InputDecoration(labelText: 'Convênio Médico'),
+                      decoration:
+                          const InputDecoration(labelText: 'Convênio Médico'),
                       items: const [
-                        DropdownMenuItem(value: 'Particular', child: Text('Particular')),
-                        DropdownMenuItem(value: 'Unimed', child: Text('Unimed')),
-                        DropdownMenuItem(value: 'Epsemg', child: Text('Epsemg')),
-                        DropdownMenuItem(value: 'Bradesco Saúde', child: Text('Bradesco Saúde')),
+                        DropdownMenuItem(
+                            value: 'Particular', child: Text('Particular')),
+                        DropdownMenuItem(
+                            value: 'Unimed', child: Text('Unimed')),
+                        DropdownMenuItem(
+                            value: 'Epsemg', child: Text('Epsemg')),
+                        DropdownMenuItem(
+                            value: 'Bradesco Saúde',
+                            child: Text('Bradesco Saúde')),
                         DropdownMenuItem(value: 'Amil', child: Text('Amil')),
                       ],
                       onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedConvenio = newValue;
-                        });
+                        setState(() => _selectedConvenio = newValue);
                       },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Selecione o convênio';
-                        }
-                        return null;
-                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Selecione o convênio'
+                          : null,
                     ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _alergiasController,
-                      decoration: const InputDecoration(labelText: 'Alergias'),
-                      maxLines: 2,
+                    const SizedBox(height: 20),
+                    Text('Alergias a Medicamentos',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Wrap(
+                        spacing: 6.0,
+                        runSpacing: 0.0,
+                        children: [
+                          ..._selectedAlergias.map((med) => Chip(
+                                label: Text(med.nome),
+                                onDeleted: () {
+                                  setState(() {
+                                    _selectedAlergias.removeWhere((item) =>
+                                        item.idMedicamento ==
+                                        med.idMedicamento);
+                                  });
+                                },
+                              )),
+                          ActionChip(
+                            avatar: const Icon(Icons.add, size: 18),
+                            label: const Text('Selecionar'),
+                            onPressed: _showMultiSelectAlergias,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _condicoesPreExistentesController,
-                      decoration: const InputDecoration(labelText: 'Condições Pré-existentes'),
+                      decoration: const InputDecoration(
+                          labelText: 'Condições Pré-existentes'),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 20),

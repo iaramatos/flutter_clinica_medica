@@ -232,13 +232,13 @@ class _RelatorioFinanceiroScreenState extends State<RelatorioFinanceiroScreen> {
                   ),
                   const SizedBox(height: 10),
                   // Detalhes das Receitas de Consultas (tabela Financeiro)
-                  if (_receitasConsultas.isNotEmpty)
-                    ..._receitasConsultas.map((r) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('- Consulta ${r.idConsulta}: R\$ ${r.valor?.toStringAsFixed(2)} (${r.formaPagamento}) - ${r.dataPagamento != null ? DateFormat('dd/MM/yyyy').format(r.dataPagamento!) : 'N/A'}'),
-                    )).toList()
-                  else
-                    const Text('Nenhum registro de pagamento de consulta no período.'),
+                  // Use uma lista de widgets para os detalhes
+                  ...(_receitasConsultas.isNotEmpty
+                    ? _receitasConsultas.map((r) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('- Consulta ${r.idConsulta}: R\$ ${r.valor?.toStringAsFixed(2)} (${r.formaPagamento}) - ${r.dataPagamento != null ? DateFormat('dd/MM/yyyy').format(r.dataPagamento!) : 'N/A'}'),
+                      )).toList()
+                    : [const Text('Nenhum registro de pagamento de consulta no período.')]),
                   
                   const SizedBox(height: 15),
                   Text(
@@ -247,13 +247,12 @@ class _RelatorioFinanceiroScreenState extends State<RelatorioFinanceiroScreen> {
                   ),
                   const SizedBox(height: 10),
                   // Detalhes das Contas a Receber Pagas
-                  if (_contasReceberPagas.isNotEmpty)
-                    ..._contasReceberPagas.map((cr) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('- ${cr.descricao}: R\$ ${cr.valor?.toStringAsFixed(2)} (Vencimento: ${cr.vencimento != null ? DateFormat('dd/MM/yyyy').format(cr.vencimento!) : 'N/A'})'),
-                    )).toList()
-                  else
-                    const Text('Nenhuma conta a receber paga no período.'),
+                  ...( _contasReceberPagas.isNotEmpty
+                    ? _contasReceberPagas.map((cr) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('- ${cr.descricao}: R\$ ${cr.valor?.toStringAsFixed(2)} (Vencimento: ${cr.vencimento != null ? DateFormat('dd/MM/yyyy').format(cr.vencimento!) : 'N/A'})'),
+                      )).toList()
+                    : [const Text('Nenhuma conta a receber paga no período.')]),
 
                   const SizedBox(height: 15),
                   Text(
@@ -262,13 +261,12 @@ class _RelatorioFinanceiroScreenState extends State<RelatorioFinanceiroScreen> {
                   ),
                   const SizedBox(height: 10),
                   // Detalhes das Contas a Pagar Pagas
-                  if (_contasPagarPagas.isNotEmpty)
-                    ..._contasPagarPagas.map((dp) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('- ${dp.descricao}: R\$ ${dp.valor?.toStringAsFixed(2)} (Vencimento: ${dp.vencimento != null ? DateFormat('dd/MM/yyyy').format(dp.vencimento!) : 'N/A'})'),
-                    )).toList()
-                  else
-                    const Text('Nenhuma conta a pagar paga no período.'),
+                  ...( _contasPagarPagas.isNotEmpty
+                    ? _contasPagarPagas.map((dp) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('- ${dp.descricao}: R\$ ${dp.valor?.toStringAsFixed(2)} (Vencimento: ${dp.vencimento != null ? DateFormat('dd/MM/yyyy').format(dp.vencimento!) : 'N/A'})'),
+                      )).toList()
+                    : [const Text('Nenhuma conta a pagar paga no período.')]),
 
                   const SizedBox(height: 20),
                 ],

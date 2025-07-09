@@ -5,8 +5,9 @@ import 'package:flutter_clinica_medica/domain/models/usuario.dart';
 import 'package:flutter_clinica_medica/domain/repositories/usuario_repository.dart';
 import 'package:flutter_clinica_medica/utils/password_util.dart';
 import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_dashboard_screen.dart'; // NOVO IMPORT
 import 'package:flutter_clinica_medica/presentation/auth/register_screen.dart';
-import 'package:flutter_clinica_medica/utils/auth_manager.dart'; // NOVO IMPORT
+import 'package:flutter_clinica_medica/utils/auth_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   final UsuarioRepository _usuarioRepository = UsuarioRepository();
-  final AuthManager _authManager = AuthManager(); // Instância do AuthManager
+  final AuthManager _authManager = AuthManager();
 
   Future<void> _loginUser() async {
     if (_formKey.currentState!.validate()) {
@@ -35,12 +36,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (user != null && PasswordUtil.verifyPassword(password, user.passwordHash, user.salt)) {
           // Login bem-sucedido
-          _authManager.login(user); // Define o usuário logado no AuthManager
+          _authManager.login(user);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Bem-vindo, ${user.username}!')),
           );
-          // Navega para o Dashboard após login
-          Navigator.of(context).pushReplacementNamed(MainDashboardScreen.routeName);
+
+          // Redireciona de acordo com o tipo de usuário
+          if (user.tipo.toLowerCase() == 'paciente') {
+            Navigator.of(context).pushReplacementNamed(PacienteDashboardScreen.routeName);
+          } else {
+            Navigator.of(context).pushReplacementNamed(MainDashboardScreen.routeName);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Nome de usuário ou senha inválidos.')),

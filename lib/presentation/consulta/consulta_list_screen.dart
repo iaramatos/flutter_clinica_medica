@@ -21,7 +21,8 @@ class ConsultaListScreen extends StatefulWidget {
 class _ConsultaListScreenState extends State<ConsultaListScreen> {
   final ConsultaRepository _consultaRepository = ConsultaRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
-  final ProfissionalRepository _profissionalRepository = ProfissionalRepository();
+  final ProfissionalRepository _profissionalRepository =
+      ProfissionalRepository();
 
   List<Consulta> _consultas = [];
   bool _isLoading = true;
@@ -82,10 +83,12 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
   // NOVO MÉTODO: Simular envio de lembrete
   Future<void> _sendReminder(Consulta consulta) async {
     final pacienteNome = await _getPacienteNome(consulta.idPaciente);
-    final formattedTime = DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora);
+    final formattedTime =
+        DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Lembrete enviado para $pacienteNome sobre a consulta em $formattedTime.'),
+        content: Text(
+            'Lembrete enviado para $pacienteNome sobre a consulta em $formattedTime.'),
         backgroundColor: Colors.orange, // Cor de destaque para o lembrete
         duration: const Duration(seconds: 3),
       ),
@@ -108,7 +111,8 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              await Navigator.of(context).pushNamed(ConsultaFormScreen.routeName);
+              await Navigator.of(context)
+                  .pushNamed(ConsultaFormScreen.routeName);
               _loadConsultas(); // Recarrega a lista ao voltar do formulário
             },
           ),
@@ -123,7 +127,8 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                   itemBuilder: (context, index) {
                     final consulta = _consultas[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: ListTile(
                         title: FutureBuilder<List<String>>(
                           future: Future.wait([
@@ -131,40 +136,49 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                             _getProfissionalNome(consulta.idProfissional),
                           ]),
                           builder: (context, snapshot) {
-                            String pacienteNome = snapshot.data?[0] ?? 'Carregando...';
-                            String profissionalNome = snapshot.data?[1] ?? 'Carregando...';
+                            String pacienteNome =
+                                snapshot.data?[0] ?? 'Carregando...';
+                            String profissionalNome =
+                                snapshot.data?[1] ?? 'Carregando...';
 
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               pacienteNome = 'Carregando...';
                               profissionalNome = 'Carregando...';
                             } else if (snapshot.hasError) {
                               pacienteNome = 'Erro';
                               profissionalNome = 'Erro';
                             }
-                            return Text('Paciente: $pacienteNome\nProfissional: $profissionalNome');
+                            return Text(
+                                'Paciente: $pacienteNome\nProfissional: $profissionalNome');
                           },
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Data/Hora: ${DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora)}'),
-                            if (consulta.motivo != null && consulta.motivo!.isNotEmpty)
+                            Text(
+                                'Data/Hora: ${DateFormat('dd/MM/yyyy HH:mm').format(consulta.dataHora)}'),
+                            if (consulta.motivo != null &&
+                                consulta.motivo!.isNotEmpty)
                               Text('Motivo: ${consulta.motivo}'),
                           ],
                         ),
-                        trailing: Row( // <-- AQUI É ONDE ESTAVA O PROBLEMA
+                        trailing: Row(
+                          // <-- AQUI É ONDE ESTAVA O PROBLEMA
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Botão de Lembrete
                             IconButton(
-                              icon: const Icon(Icons.notifications, color: Colors.orange),
+                              icon: const Icon(Icons.notifications,
+                                  color: Colors.orange),
                               onPressed: () => _sendReminder(consulta),
                             ),
                             // Botão de Editar/Reagendar
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () async {
-                                await Navigator.of(context).push(MaterialPageRoute(
+                                await Navigator.of(context)
+                                    .push(MaterialPageRoute(
                                   builder: (context) => ConsultaFormScreen(
                                     consulta: consulta,
                                   ),
@@ -174,9 +188,11 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                             ),
                             // Botão de Pagamento
                             IconButton(
-                              icon: const Icon(Icons.payment, color: Colors.green),
+                              icon: const Icon(Icons.payment,
+                                  color: Colors.green),
                               onPressed: () async {
-                                await Navigator.of(context).push(MaterialPageRoute(
+                                await Navigator.of(context)
+                                    .push(MaterialPageRoute(
                                   builder: (context) => FinanceiroFormScreen(
                                     idConsulta: consulta.idConsulta,
                                   ),
@@ -187,7 +203,8 @@ class _ConsultaListScreenState extends State<ConsultaListScreen> {
                             // Botão de Excluir/Cancelar
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteConsulta(consulta.idConsulta!),
+                              onPressed: () =>
+                                  _deleteConsulta(consulta.idConsulta!),
                             ),
                           ],
                         ),
