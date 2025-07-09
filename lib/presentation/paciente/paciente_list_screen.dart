@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
-import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart'; // Para navegar para o formulário
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_details_screen.dart'; // NOVO IMPORT
 
 class PacienteListScreen extends StatefulWidget {
   const PacienteListScreen({super.key});
@@ -51,7 +52,7 @@ class _PacienteListScreenState extends State<PacienteListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Paciente excluído com sucesso!')),
       );
-      _loadPacientes(); // Recarrega a lista
+      _loadPacientes();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao excluir paciente: $e')),
@@ -75,7 +76,7 @@ class _PacienteListScreenState extends State<PacienteListScreen> {
             icon: const Icon(Icons.add),
             onPressed: () async {
               await Navigator.of(context).pushNamed(PacienteFormScreen.routeName);
-              _loadPacientes(); // Recarrega a lista ao voltar do formulário
+              _loadPacientes();
             },
           ),
         ],
@@ -99,15 +100,12 @@ class _PacienteListScreenState extends State<PacienteListScreen> {
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () async {
-                                // Navegar para o formulário para edição (passando o ID do paciente)
                                 await Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) => PacienteFormScreen(
-                                    // Você precisaria modificar PacienteFormScreen para aceitar um paciente para edição
-                                    // Por enquanto, apenas cria um novo. Para edição, seria assim:
-                                    // paciente: paciente,
+                                    paciente: paciente,
                                   ),
                                 ));
-                                _loadPacientes(); // Recarrega a lista após edição
+                                _loadPacientes();
                               },
                             ),
                             IconButton(
@@ -116,11 +114,13 @@ class _PacienteListScreenState extends State<PacienteListScreen> {
                             ),
                           ],
                         ),
-                        onTap: () {
-                          // Opcional: Implementar uma tela de detalhes do paciente
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Detalhes de ${paciente.nome}')),
+                        onTap: () async {
+                          // NOVO: Ao clicar no paciente, navega para a tela de detalhes/prontuário
+                          await Navigator.of(context).pushNamed(
+                            PacienteDetailsScreen.routeName,
+                            arguments: paciente.idPaciente,
                           );
+                          _loadPacientes(); // Recarrega a lista se houver alterações nos detalhes
                         },
                       ),
                     );

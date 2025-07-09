@@ -2,42 +2,41 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_clinica_medica/infra/local/local_database.dart';
-import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/paciente/paciente_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/profissional/profissional_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/profissional/profissional_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/consulta/consulta_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/medicamento/medicamento_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/medicamento/medicamento_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
-import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
-
-// IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
-import 'package:flutter_clinica_medica/presentation/contas/conta_receber_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_form_screen.dart';
-import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
-import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
-
 // NOVOS IMPORTS PARA AUTENTICAÇÃO (ITERAÇÃO 8)
 import 'package:flutter_clinica_medica/presentation/auth/login_screen.dart';
 import 'package:flutter_clinica_medica/presentation/auth/register_screen.dart';
-
-// NOVO IMPORT PARA O MÓDULO DE PROCEDIMENTOS
-import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/consulta/consulta_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/consulta/consulta_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_pagar_list_screen.dart';
+// IMPORTS PARA A IT. 7 - CONTAS E RELATÓRIOS
+import 'package:flutter_clinica_medica/presentation/contas/conta_receber_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/conta_receber_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/contas/relatorio_financeiro_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/exame_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/exame/resultado_exame_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/financeiro/financeiro_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/home/main_dashboard_screen.dart';
+import 'package:flutter_clinica_medica/presentation/medicamento/medicamento_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/medicamento/medicamento_list_screen.dart';
+//NOVO IMPORT: CORRIGINDO VISUALIZAÇÃO DO PACIENTE
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_dashboard_screen.dart';
+// NOVO IMPORT: Para a tela de detalhes do paciente (Prontuário)
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_details_screen.dart';
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/paciente/paciente_list_screen.dart';
 import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_form_screen.dart';
-
+// NOVO IMPORT PARA O MÓDULO DE PROCEDIMENTOS (ITERAÇÃO 9)
+import 'package:flutter_clinica_medica/presentation/procedimento/procedimento_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/profissional/profissional_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/profissional/profissional_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/receita/prescricao_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/receita/prescricao_list_screen.dart';
+import 'package:flutter_clinica_medica/presentation/sala/sala_form_screen.dart';
+import 'package:flutter_clinica_medica/presentation/sala/sala_list_screen.dart';
 // IMPORTS PARA LOCALIZAÇÃO
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/intl.dart'; // Mantenha este import, pois ele já é usado para formatação de data
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,7 +126,7 @@ class ClinicaMedicaApp extends StatelessWidget {
         Locale('pt', 'BR'), // Português do Brasil
       ],
       // Rota inicial do aplicativo (AGORA INICIA NA TELA DE LOGIN)
-      initialRoute: LoginScreen.routeName, // AQUI ESTÁ A MUDANÇA PRINCIPAL
+      initialRoute: LoginScreen.routeName,
       routes: {
         // Rotas de Autenticação (NOVAS)
         LoginScreen.routeName: (context) => const LoginScreen(),
@@ -136,28 +135,44 @@ class ClinicaMedicaApp extends StatelessWidget {
         // Rotas de Paciente
         PacienteListScreen.routeName: (context) => const PacienteListScreen(),
         PacienteFormScreen.routeName: (context) => const PacienteFormScreen(),
+        // NOVO: Rota para Detalhes do Paciente/Prontuário
+        PacienteDetailsScreen.routeName: (context) => PacienteDetailsScreen(
+              pacienteId: ModalRoute.of(context)!.settings.arguments as int,
+            ),
 
         // Rotas de Profissional
-        ProfissionalListScreen.routeName: (context) => const ProfissionalListScreen(),
-        ProfissionalFormScreen.routeName: (context) => const ProfissionalFormScreen(),
+        ProfissionalListScreen.routeName: (context) =>
+            const ProfissionalListScreen(),
+        ProfissionalFormScreen.routeName: (context) =>
+            const ProfissionalFormScreen(),
 
         // Rotas de Consulta
         ConsultaListScreen.routeName: (context) => const ConsultaListScreen(),
         ConsultaFormScreen.routeName: (context) => const ConsultaFormScreen(),
 
         // Rotas de Medicamento e Prescrição
-        MedicamentoListScreen.routeName: (context) => const MedicamentoListScreen(),
-        MedicamentoFormScreen.routeName: (context) => const MedicamentoFormScreen(),
-        PrescricaoFormScreen.routeName: (context) => const PrescricaoFormScreen(),
-        PrescricaoListScreen.routeName: (context) => const PrescricaoListScreen(),
+        MedicamentoListScreen.routeName: (context) =>
+            const MedicamentoListScreen(),
+        MedicamentoFormScreen.routeName: (context) =>
+            const MedicamentoFormScreen(),
+        PrescricaoFormScreen.routeName: (context) =>
+            const PrescricaoFormScreen(),
+        PrescricaoListScreen.routeName: (context) =>
+            const PrescricaoListScreen(),
 
         // Rotas Financeiras
-        FinanceiroFormScreen.routeName: (context) => const FinanceiroFormScreen(),
-        ContaReceberListScreen.routeName: (context) => const ContaReceberListScreen(),
-        ContaReceberFormScreen.routeName: (context) => const ContaReceberFormScreen(),
-        ContaPagarListScreen.routeName: (context) => const ContaPagarListScreen(),
-        ContaPagarFormScreen.routeName: (context) => const ContaPagarFormScreen(),
-        RelatorioFinanceiroScreen.routeName: (context) => const RelatorioFinanceiroScreen(),
+        FinanceiroFormScreen.routeName: (context) =>
+            const FinanceiroFormScreen(),
+        ContaReceberListScreen.routeName: (context) =>
+            const ContaReceberListScreen(),
+        ContaReceberFormScreen.routeName: (context) =>
+            const ContaReceberFormScreen(),
+        ContaPagarListScreen.routeName: (context) =>
+            const ContaPagarListScreen(),
+        ContaPagarFormScreen.routeName: (context) =>
+            const ContaPagarFormScreen(),
+        RelatorioFinanceiroScreen.routeName: (context) =>
+            const RelatorioFinanceiroScreen(),
 
         // Rotas de Salas
         SalaListScreen.routeName: (context) => const SalaListScreen(),
@@ -165,15 +180,26 @@ class ClinicaMedicaApp extends StatelessWidget {
 
         // Rotas de Exames e Resultados de Exames
         ExameListScreen.routeName: (context) => const ExameListScreen(),
-        ResultadoExameFormScreen.routeName: (context) => const ResultadoExameFormScreen(),
-        ResultadoExameListScreen.routeName: (context) => const ResultadoExameListScreen(),
+        ResultadoExameFormScreen.routeName: (context) =>
+            const ResultadoExameFormScreen(),
+        ResultadoExameListScreen.routeName: (context) =>
+            const ResultadoExameListScreen(),
 
         // Rotas de Procedimentos (NOVO PARA ITERAÇÃO 9)
-        ProcedimentoListScreen.routeName: (context) => const ProcedimentoListScreen(),
-        ProcedimentoFormScreen.routeName: (context) => const ProcedimentoFormScreen(),
+        ProcedimentoListScreen.routeName: (context) =>
+            const ProcedimentoListScreen(),
+        ProcedimentoFormScreen.routeName: (context) =>
+            const ProcedimentoFormScreen(),
 
         // Rota do Dashboard Principal (acessado após login)
         MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
+
+        // Rota do Dashboard Principal (acessado após login)
+        MainDashboardScreen.routeName: (context) => const MainDashboardScreen(),
+
+        // Rota exclusiva para pacientes
+        PacienteDashboardScreen.routeName: (context) =>
+            const PacienteDashboardScreen(),
       },
     );
   }

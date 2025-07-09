@@ -1,14 +1,14 @@
 // lib/presentation/receita/prescricao_form_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_clinica_medica/domain/models/receita.dart';
 import 'package:flutter_clinica_medica/domain/models/medicamento.dart';
-import 'package:flutter_clinica_medica/domain/models/prescricao_medicamento.dart';
 import 'package:flutter_clinica_medica/domain/models/paciente.dart';
-import 'package:flutter_clinica_medica/domain/repositories/receita_repository.dart';
+import 'package:flutter_clinica_medica/domain/models/prescricao_medicamento.dart';
+import 'package:flutter_clinica_medica/domain/models/receita.dart';
 import 'package:flutter_clinica_medica/domain/repositories/medicamento_repository.dart';
-import 'package:flutter_clinica_medica/domain/repositories/prescricao_medicamento_repository.dart';
 import 'package:flutter_clinica_medica/domain/repositories/paciente_repository.dart';
+import 'package:flutter_clinica_medica/domain/repositories/prescricao_medicamento_repository.dart';
+import 'package:flutter_clinica_medica/domain/repositories/receita_repository.dart';
 
 class PrescricaoFormScreen extends StatefulWidget {
   final int? idReceita;
@@ -22,10 +22,7 @@ class PrescricaoFormScreen extends StatefulWidget {
 
 class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  // REMOVIDO: final _dosagemController = TextEditingController();
-  // REMOVIDO: final _viaController = TextEditingController();
-  // REMOVIDO: final _frequenciaController = TextEditingController();
-  final _quantidadeController = TextEditingController(); // NOVO: Controller para quantidade
+  final _quantidadeController = TextEditingController();
 
   Paciente? _selectedPaciente;
   Medicamento? _selectedMedicamento;
@@ -39,7 +36,8 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
 
   final ReceitaRepository _receitaRepository = ReceitaRepository();
   final MedicamentoRepository _medicamentoRepository = MedicamentoRepository();
-  final PrescricaoMedicamentoRepository _prescricaoRepository = PrescricaoMedicamentoRepository();
+  final PrescricaoMedicamentoRepository _prescricaoRepository =
+      PrescricaoMedicamentoRepository();
   final PacienteRepository _pacienteRepository = PacienteRepository();
 
   int? _currentReceitaId;
@@ -75,88 +73,110 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
       _currentReceitaId = widget.idReceita;
       return;
     }
-
-    final newReceita = Receita(dataEmissao: DateTime.now(), observacoes: 'Receita gerada automaticamente');
+    final newReceita = Receita(
+        dataEmissao: DateTime.now(),
+        observacoes: 'Receita gerada automaticamente');
     try {
       _currentReceitaId = await _receitaRepository.insertReceita(newReceita);
-      print('Nova receita criada automaticamente com ID: $_currentReceitaId');
     } catch (e) {
-      print('Erro ao criar nova receita automaticamente: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao preparar receita: $e')),
       );
     }
   }
 
-  // NOVO MÉTODO: Verificar interações medicamentosas
-  void _checkInteracoesMedicamentosas(Medicamento? medicamento) {
-    if (medicamento != null) {
-      // Lógica de simulação de interação. Em um sistema real, seria uma busca em uma base de dados de interações.
-      if (medicamento.nome.toLowerCase().contains('varfarina') ||
-          medicamento.nome.toLowerCase().contains('anticoagulante')) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ALERTA: Este medicamento pode ter interações sérias. Verifique o prontuário do paciente!'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      } else if (medicamento.nome.toLowerCase().contains('antibiótico') &&
-                 (_selectedPaciente?.alergias?.toLowerCase().contains('penicilina') ?? false)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ALERTA: Paciente possui alergia conhecida a penicilina. CUIDADO com antibióticos!'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
+  // MÉTODO PRINCIPAL DE VERIFICAÇÃO DE SEGURANÇA (TRAVA DE ALERGIA)
+  Future<void> _checkAllergyAndBlock(Medicamento? med) async {
+    // Só continua se um paciente e um medicamento estiverem selecionados
+    if (med == null || _selectedPaciente == null) {
+      return;
+    }
+
+    final alergiasDoPaciente = _selectedPaciente!.alergias?.toLowerCase() ?? '';
+    final nomeMedicamento = med.nome.toLowerCase();
+
+    // Verifica se a string de alergias do paciente contém o nome do medicamento
+    if (alergiasDoPaciente.isNotEmpty &&
+        alergiasDoPaciente.contains(nomeMedicamento)) {
+      // Usa o 'await' para esperar o dialogo ser fechado antes de continuar
+      await showDialog(
+        context: context,
+        barrierDismissible: false, // Impede que o usuário feche clicando fora
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.red),
+                SizedBox(width: 10),
+                Text('ALERTA DE ALERGIA!'),
+              ],
+            ),
+            content: Text(
+              'O paciente ${_selectedPaciente!.nome} possui alergia a "${med.nome}". A prescrição deste item será bloqueada.',
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Entendido'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Fecha o pop-up
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      // AÇÃO DE BLOQUEIO: Limpa a seleção do medicamento problemático
+      setState(() {
+        _selectedMedicamento = null;
+      });
     }
   }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && _currentReceitaId != null) {
-      if (_selectedMedicamento == null || _selectedPaciente == null || _selectedDosagem == null) {
+      if (_selectedMedicamento == null ||
+          _selectedPaciente == null ||
+          _selectedDosagem == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione o medicamento, paciente e dosagem.')),
+          const SnackBar(
+              content: Text(
+                  'Por favor, selecione o medicamento, paciente e dosagem.')),
         );
         return;
       }
-      
-      final quantidade = int.tryParse(_quantidadeController.text); // Pega a quantidade
+
+      final quantidade = int.tryParse(_quantidadeController.text);
       if (quantidade == null || quantidade <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Por favor, insira uma quantidade válida para o medicamento.')),
-          );
-          return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Por favor, insira uma quantidade válida para o medicamento.')),
+        );
+        return;
       }
-
-
-      // Chamar a verificação de interação também ao submeter, para garantir.
-      _checkInteracoesMedicamentosas(_selectedMedicamento);
-      // Você pode adicionar uma confirmação extra aqui se a interação for crítica.
 
       final prescricao = PrescricaoMedicamento(
         idReceita: _currentReceitaId!,
         idMedicamento: _selectedMedicamento!.idMedicamento!,
-        dosagem: _selectedDosagem, // Usar o valor do dropdown
-        via: _selectedVia,         // Usar o valor do dropdown
-        frequencia: _selectedFrequencia, // Usar o valor do dropdown
-        quantidade: quantidade, // NOVO: Atribui a quantidade
+        dosagem: _selectedDosagem,
+        via: _selectedVia,
+        frequencia: _selectedFrequencia,
+        quantidade: quantidade,
       );
 
       try {
         await _prescricaoRepository.insertPrescricaoMedicamento(prescricao);
-        
-        // NOVO: BAIXA AUTOMÁTICA NO ESTOQUE (RN07)
-        if (_selectedMedicamento != null && _selectedMedicamento!.estoqueAtual != null) {
+
+        if (_selectedMedicamento != null &&
+            _selectedMedicamento!.estoqueAtual != null) {
           final novoEstoque = _selectedMedicamento!.estoqueAtual! - quantidade;
           if (novoEstoque < 0) {
-             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Estoque insuficiente para esta prescrição!'), backgroundColor: Colors.red),
-             );
-             // Opcional: Você pode querer impedir a prescrição aqui se o estoque for negativo
-             // return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Estoque insuficiente para esta prescrição!'),
+                  backgroundColor: Colors.red),
+            );
           }
           final medicamentoAtualizado = Medicamento(
             idMedicamento: _selectedMedicamento!.idMedicamento,
@@ -165,9 +185,6 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
             estoqueAtual: novoEstoque,
           );
           await _medicamentoRepository.updateMedicamento(medicamentoAtualizado);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Estoque de ${_selectedMedicamento!.nome} atualizado para $novoEstoque.')),
-          );
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +200,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
   }
 
   void _clearForm() {
-    _quantidadeController.clear(); // Limpa quantidade
+    _quantidadeController.clear();
     setState(() {
       _selectedMedicamento = null;
       _selectedPaciente = null;
@@ -195,7 +212,7 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
 
   @override
   void dispose() {
-    _quantidadeController.dispose(); // Dispose do controller
+    _quantidadeController.dispose();
     super.dispose();
   }
 
@@ -222,60 +239,57 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
                       items: _pacientes.map((paciente) {
                         return DropdownMenuItem(
                           value: paciente,
-                          child: Text('${paciente.nome} (CPF: ${paciente.cpf})'),
+                          child:
+                              Text('${paciente.nome} (CPF: ${paciente.cpf})'),
                         );
                       }).toList(),
                       onChanged: (Paciente? newValue) {
                         setState(() {
                           _selectedPaciente = newValue;
-                          // NOVO: Chamar verificação de interação ao mudar o paciente (para alergias)
-                          if (newValue != null && _selectedMedicamento != null) {
-                            _checkInteracoesMedicamentosas(_selectedMedicamento);
-                          }
                         });
+                        // Checa a alergia caso um medicamento já esteja selecionado
+                        _checkAllergyAndBlock(_selectedMedicamento);
                       },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Selecione o paciente';
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          value == null ? 'Selecione o paciente' : null,
                     ),
                     const SizedBox(height: 10),
 
                     // Campo de Medicamento
                     DropdownButtonFormField<Medicamento>(
                       value: _selectedMedicamento,
-                      decoration: const InputDecoration(labelText: 'Medicamento'),
+                      decoration:
+                          const InputDecoration(labelText: 'Medicamento'),
                       items: _medicamentos.map((med) {
                         return DropdownMenuItem(
                           value: med,
-                          child: Text('${med.nome} (Estoque: ${med.estoqueAtual ?? 'N/A'})'),
+                          child: Text(
+                              '${med.nome} (Estoque: ${med.estoqueAtual ?? 'N/A'})'),
                         );
                       }).toList(),
                       onChanged: (Medicamento? newValue) {
                         setState(() {
                           _selectedMedicamento = newValue;
-                          // NOVO: Chamar verificação de interação ao mudar o medicamento
-                          _checkInteracoesMedicamentosas(newValue);
                         });
+                        // AQUI ACONTECE A MÁGICA: chama a verificação ao selecionar
+                        _checkAllergyAndBlock(newValue);
                       },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Selecione um medicamento';
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          value == null ? 'Selecione um medicamento' : null,
                     ),
                     const SizedBox(height: 10),
 
-                    // CAMPO QUANTIDADE (NOVO)
+                    // CAMPO QUANTIDADE
                     TextFormField(
                       controller: _quantidadeController,
-                      decoration: const InputDecoration(labelText: 'Quantidade'),
+                      decoration:
+                          const InputDecoration(labelText: 'Quantidade'),
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.isEmpty || int.tryParse(value) == null || int.parse(value) <= 0) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            int.tryParse(value) == null ||
+                            int.parse(value) <= 0) {
                           return 'Por favor, insira uma quantidade válida';
                         }
                         return null;
@@ -295,65 +309,61 @@ class _PrescricaoFormScreenState extends State<PrescricaoFormScreen> {
                         DropdownMenuItem(value: '200mg', child: Text('200mg')),
                       ],
                       onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedDosagem = newValue;
-                        });
+                        setState(() => _selectedDosagem = newValue);
                       },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a dosagem';
-                        }
-                        return null;
-                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Por favor, insira a dosagem'
+                          : null,
                     ),
                     const SizedBox(height: 10),
 
                     // CAMPO VIA DE ADMINISTRAÇÃO (COM DROPDOWN)
                     DropdownButtonFormField<String>(
                       value: _selectedVia,
-                      decoration: const InputDecoration(labelText: 'Via de Administração'),
+                      decoration: const InputDecoration(
+                          labelText: 'Via de Administração'),
                       items: const [
                         DropdownMenuItem(value: 'Oral', child: Text('Oral')),
-                        DropdownMenuItem(value: 'Intravenosa', child: Text('Intravenosa')),
-                        DropdownMenuItem(value: 'Tópica', child: Text('Tópica')),
-                        DropdownMenuItem(value: 'Subcutânea', child: Text('Subcutânea')),
+                        DropdownMenuItem(
+                            value: 'Intravenosa', child: Text('Intravenosa')),
+                        DropdownMenuItem(
+                            value: 'Tópica', child: Text('Tópica')),
+                        DropdownMenuItem(
+                            value: 'Subcutânea', child: Text('Subcutânea')),
                       ],
                       onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedVia = newValue;
-                        });
+                        setState(() => _selectedVia = newValue);
                       },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a via de administração';
-                        }
-                        return null;
-                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Por favor, insira a via de administração'
+                          : null,
                     ),
                     const SizedBox(height: 10),
 
                     // CAMPO FREQUÊNCIA (COM DROPDOWN)
                     DropdownButtonFormField<String>(
                       value: _selectedFrequencia,
-                      decoration: const InputDecoration(labelText: 'Frequência'),
+                      decoration:
+                          const InputDecoration(labelText: 'Frequência'),
                       items: const [
                         DropdownMenuItem(value: '8/8h', child: Text('8/8h')),
-                        DropdownMenuItem(value: '12/12h', child: Text('12/12h')),
-                        DropdownMenuItem(value: '24/24h', child: Text('24/24h')),
-                        DropdownMenuItem(value: 'Uma vez ao dia', child: Text('Uma vez ao dia')),
-                        DropdownMenuItem(value: 'De 6 em 6 horas', child: Text('De 6 em 6 horas')),
+                        DropdownMenuItem(
+                            value: '12/12h', child: Text('12/12h')),
+                        DropdownMenuItem(
+                            value: '24/24h', child: Text('24/24h')),
+                        DropdownMenuItem(
+                            value: 'Uma vez ao dia',
+                            child: Text('Uma vez ao dia')),
+                        DropdownMenuItem(
+                            value: 'De 6 em 6 horas',
+                            child: Text('De 6 em 6 horas')),
                       ],
                       onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedFrequencia = newValue;
-                        });
+                        setState(() => _selectedFrequencia = newValue);
                       },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a frequência';
-                        }
-                        return null;
-                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Por favor, insira a frequência'
+                          : null,
                     ),
                     const SizedBox(height: 20),
 

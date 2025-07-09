@@ -61,6 +61,6 @@ da aplicação. O atributo onCreate é responsável por gerenciar
     if (database != null && database!.isOpen) {
       // Fecha a conexão com o banco
       await database!.close();
-    }
-  }
+}
+}
 }
